@@ -95,38 +95,35 @@ async function main() {
         // 执行下载命令
         if (type === 'song') {
             execSync(`node dist/index.js download ${musicId}`, { stdio: 'inherit' });
+
+            // 获取下载的文件名（从输出中获取）
+            const output = execSync(`node dist/index.js download ${musicId}`, { encoding: 'utf8' });
+            const songNameMatch = output.match(/歌曲信息: (.+)/);
+            const songName = songNameMatch ? songNameMatch[1].trim() : `song-${musicId}`;
+
+            // 立即重命名文件
+            const downloadedFile = glob.sync('downloads/**/*.mp3')[0];
+            if (downloadedFile && path.basename(downloadedFile) === '-.mp3') {
+                const newPath = path.join(path.dirname(downloadedFile), `${songName}.mp3`);
+                fs.renameSync(downloadedFile, newPath);
+            }
         } else {
             execSync(`node dist/index.js album ${musicId}`, { stdio: 'inherit' });
         }
 
-        // 查找并重命名下载的文件
+        // 查找下载的文件
         const downloadedFiles = glob.sync('downloads/**/*.mp3');
 
         if (downloadedFiles.length === 0) {
             throw new Error('没有找到下载的文件');
         }
 
-        // 重命名文件，只处理异常的文件名
-        const renamedFiles = downloadedFiles.map(filePath => {
-            const originalName = path.basename(filePath);
-            // 只有当文件名异常时才重命名
-            if (originalName === '-.mp3' || originalName === '.mp3') {
-                // 如果无法获取歌曲信息，使用默认名称
-                const newName = `song-${musicId}-${Date.now()}.mp3`;
-                const newPath = path.join(path.dirname(filePath), newName);
-                fs.renameSync(filePath, newPath);
-                return newPath;
-            }
-            // 保持原有的歌手-歌曲名格
-            return filePath;
-        });
-
         // 创建 release tag
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const tag = `download-${issueNumber}-${timestamp}`;
 
-        // 使用重命名后的文件路径
-        const { release, assets } = await createRelease(octokit, owner, repo, tag, renamedFiles);
+        // 使用下载的文件路径
+        const { release, assets } = await createRelease(octokit, owner, repo, tag, downloadedFiles);
 
         // 在 issue 中添加下载链接
         const downloadLinks = assets.map(asset => {
