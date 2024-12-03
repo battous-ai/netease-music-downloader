@@ -3,6 +3,7 @@ import axios from 'axios';
 import * as fs from 'fs';
 import { getSongInfo, checkSongAvailability } from '../services/netease';
 import { sanitizeFileName, getDownloadPath } from '../utils/file';
+import { createSingleBar } from '../utils/progress';
 
 export async function downloadSong(id: string, progressBar?: SingleBar): Promise<void> {
   try {
@@ -36,7 +37,18 @@ export async function downloadSong(id: string, progressBar?: SingleBar): Promise
       responseType: 'stream'
     });
 
+    const totalLength = parseInt(response.headers['content-length'], 10);
+    const bar = createSingleBar();
+    bar.start(Math.round(totalLength/1024), 0);
+
     const writer = fs.createWriteStream(filePath);
+    let downloadedBytes = 0;
+
+    response.data.on('data', (chunk: Buffer) => {
+      downloadedBytes += chunk.length;
+      bar.update(Math.round(downloadedBytes/1024));
+    });
+
     response.data.pipe(writer);
 
     await new Promise((resolve, reject) => {
@@ -44,7 +56,8 @@ export async function downloadSong(id: string, progressBar?: SingleBar): Promise
       writer.on('error', reject);
     });
 
-    console.log(`下载完成: ${fileName}`);
+    bar.stop();
+    console.log(`\n下载完成: ${fileName}`);
   } catch (error) {
     const err = error as Error;
     console.error(`下载失败 (ID: ${id}):`, err.message);
