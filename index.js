@@ -34,7 +34,7 @@ async function downloadMusic(id) {
       songName = songResponse.data?.songs?.[0]?.name || id;
       artistName = songResponse.data?.songs?.[0]?.artists?.[0]?.name || '未知歌手';
 
-      console.log(`\n歌曲信息: ${artistName} - ${songName}`);
+      console.log(`\n歌曲信息: ${artistName}-${songName}`);
     } catch (error) {
       console.error('获取歌曲信息失败:', error.message);
       songName = id;
@@ -62,7 +62,7 @@ async function downloadMusic(id) {
     }
 
     // 在下载前先打印一下信息
-    console.log(`开始下载: ${fileName}`);
+    console.log(`开始下载: ${sanitizedArtistName}-${sanitizedSongName}`);
 
     // 构建实际的音乐文件URL
     const musicUrl = `https://music.163.com/song/media/outer/url?id=${id}.mp3`;
@@ -120,7 +120,7 @@ async function downloadMusic(id) {
 // 修改 getAlbumInfo 函数，返回更多信息
 async function getAlbumInfo(albumId) {
   try {
-    // 先获取专辑��
+    // 先获取专辑
     const response = await axios.get(`https://music.163.com/album?id=${albumId}`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
