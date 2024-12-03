@@ -94,14 +94,17 @@ async function main() {
 
         // 执行下载命令
         if (type === 'song') {
-            execSync(`node dist/index.js download ${musicId}`, { stdio: 'inherit' });
+            // 执行下载并捕获输出
+            const output = execSync(`node dist/index.js download ${musicId}`, {
+                stdio: ['inherit', 'pipe', 'inherit'],
+                encoding: 'utf8'
+            });
 
-            // 获取下载的文件名（从输出中获取）
-            const output = execSync(`node dist/index.js download ${musicId}`, { encoding: 'utf8' });
+            // 从输出中获取歌曲信息
             const songNameMatch = output.match(/歌曲信息: (.+)/);
             const songName = songNameMatch ? songNameMatch[1].trim() : `song-${musicId}`;
 
-            // 立即重命名文件
+            // 重命名文件
             const downloadedFile = glob.sync('downloads/**/*.mp3')[0];
             if (downloadedFile && path.basename(downloadedFile) === '-.mp3') {
                 const newPath = path.join(path.dirname(downloadedFile), `${songName}.mp3`);
