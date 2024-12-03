@@ -50,16 +50,20 @@ async function main() {
     const issueNumber = event.issue.number;
 
     try {
+        // 解析 issue body (现在是 JSON 格式)
         const body = event.issue.body;
-        const songMatch = body.match(/song:(\d+)/);
-        const albumMatch = body.match(/album:(\d+)/);
+        const formData = JSON.parse(body);
 
-        if (!songMatch && !albumMatch) {
+        // 获取下载类型和ID
+        const type = formData.type === '单曲' ? 'song' : 'album';
+        const musicId = formData.music_id;
+
+        if (!musicId || !/^\d+$/.test(musicId)) {
             await octokit.issues.createComment({
                 owner,
                 repo,
                 issue_number: issueNumber,
-                body: "无法识别音乐ID，请使用正确的格式：song:123456 或 album:123456"
+                body: "无效的音乐ID，请提供正确的数字ID"
             });
             return;
         }
@@ -67,11 +71,11 @@ async function main() {
         // 先构建项目
         execSync('npm run build', { stdio: 'inherit' });
 
-        // 执行编译后的 JavaScript 代码
-        if (songMatch) {
-            execSync(`node dist/index.js -s ${songMatch[1]}`, { stdio: 'inherit' });
+        // 执行下载命令
+        if (type === 'song') {
+            execSync(`node dist/index.js -s ${musicId}`, { stdio: 'inherit' });
         } else {
-            execSync(`node dist/index.js -a ${albumMatch[1]}`, { stdio: 'inherit' });
+            execSync(`node dist/index.js -a ${musicId}`, { stdio: 'inherit' });
         }
 
         // 查找下载的音乐文件
