@@ -23,12 +23,6 @@ cd netease-music-downloader
 
 # 安装依赖
 pnpm install
-
-# 构建项目
-pnpm build
-
-# 全局安装（可选）
-npm link
 ```
 
 ## 使用方法
@@ -86,19 +80,6 @@ downloads/
     ├── 01.歌手名-歌曲1.mp3
     ├── 02.歌手名-歌曲2.mp3
     └── ...
-```
-
-## 开发
-
-```bash
-# 启动开发模式
-pnpm dev
-
-# 构建项目
-pnpm build
-
-# 运行构建后的版本
-node dist/index.js
 ```
 
 ## 注意事项
