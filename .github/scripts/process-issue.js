@@ -16,11 +16,12 @@ async function createRelease(octokit, owner, repo, tag, files) {
     });
 
     // 上传所有文件到 release
-    const uploadPromises = files.map(async (filePath) => {
+    const uploadedAssets = [];
+    for (const filePath of files) {
         const content = fs.readFileSync(filePath);
         const fileName = path.basename(filePath);
 
-        await octokit.repos.uploadReleaseAsset({
+        const { data: asset } = await octokit.repos.uploadReleaseAsset({
             owner,
             repo,
             release_id: release.id,
@@ -32,11 +33,10 @@ async function createRelease(octokit, owner, repo, tag, files) {
             }
         });
 
-        return fileName;
-    });
+        uploadedAssets.push(asset);
+    }
 
-    const uploadedFiles = await Promise.all(uploadPromises);
-    return { release, uploadedFiles };
+    return { release, assets: uploadedAssets };
 }
 
 async function main() {
@@ -102,12 +102,11 @@ async function main() {
         const tag = `download-${issueNumber}-${timestamp}`;
 
         // 上传文件到 release
-        const { release, uploadedFiles } = await createRelease(octokit, owner, repo, tag, downloadedFiles);
+        const { release, assets } = await createRelease(octokit, owner, repo, tag, downloadedFiles);
 
         // 在 issue 中添加下载链接
-        const downloadLinks = uploadedFiles.map(fileName => {
-            const assetUrl = release.assets.find(asset => asset.name === fileName).browser_download_url;
-            return `- [${fileName}](${assetUrl})`;
+        const downloadLinks = assets.map(asset => {
+            return `- [${asset.name}](${asset.browser_download_url})`;
         }).join('\n');
 
         await octokit.issues.createComment({
