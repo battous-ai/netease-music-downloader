@@ -21,14 +21,9 @@ async function createRelease(octokit, owner, repo, tag, files) {
         const content = fs.readFileSync(filePath);
         let fileName = path.basename(filePath);
 
-        // 确保文件名是有效的，如果包含中文则进行 URL 编码
+        // 只处理异常文件名
         if (fileName === '-.mp3' || fileName === '.mp3') {
             fileName = `song-${Date.now()}.mp3`;
-        } else {
-            // 保留原始文件名用于显示
-            const displayName = fileName;
-            // 对包含中文的文件名进行编码
-            fileName = encodeURIComponent(fileName);
         }
 
         const { data: asset } = await octokit.repos.uploadReleaseAsset({
@@ -39,14 +34,13 @@ async function createRelease(octokit, owner, repo, tag, files) {
             data: content,
             headers: {
                 'content-type': 'audio/mpeg',
-                'content-length': content.length,
-                'content-disposition': `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`
+                'content-length': content.length
             }
         });
 
-        // 保存原始文件名和 URL
+        // 保存文件信息
         uploadedAssets.push({
-            name: decodeURIComponent(fileName), // 使用解码后的原始文件名显示
+            name: fileName,
             browser_download_url: asset.browser_download_url
         });
     }
@@ -123,7 +117,7 @@ async function main() {
                 fs.renameSync(filePath, newPath);
                 return newPath;
             }
-            // 保持原有的歌手-歌曲名格��
+            // 保持原有的歌手-歌曲名格
             return filePath;
         });
 
