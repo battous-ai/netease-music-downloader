@@ -19,7 +19,10 @@ async function createRelease(octokit, owner, repo, tag, files) {
     const uploadedAssets = [];
     for (const filePath of files) {
         const content = fs.readFileSync(filePath);
-        const fileName = path.basename(filePath);
+        let fileName = path.basename(filePath);
+        if (fileName === '-.mp3' || fileName === '.mp3') {
+            fileName = `music-${Date.now()}.mp3`;
+        }
 
         const { data: asset } = await octokit.repos.uploadReleaseAsset({
             owner,
@@ -62,7 +65,7 @@ async function main() {
                 owner,
                 repo,
                 issue_number: issueNumber,
-                body: "无法解析请求内容，请使用正确的issue模板"
+                body: "无法解析请求内容请使用正确的issue模板"
             });
             return;
         }
@@ -85,24 +88,36 @@ async function main() {
 
         // 执行下载命令
         if (type === 'song') {
-            execSync(`node dist/index.js download ${musicId}`, { stdio: 'inherit' });
+            execSync(`node dist/index.js download ${musicId} --name "song-${musicId}"`, { stdio: 'inherit' });
         } else {
-            execSync(`node dist/index.js album ${musicId}`, { stdio: 'inherit' });
+            execSync(`node dist/index.js album ${musicId} --name "album-${musicId}"`, { stdio: 'inherit' });
         }
 
-        // 查找下载的音乐文件
+        // 查找并重命名下载的文件
         const downloadedFiles = glob.sync('downloads/**/*.mp3');
 
         if (downloadedFiles.length === 0) {
             throw new Error('没有找到下载的文件');
         }
 
-        // 创建 release tag (使用 issue 编号和时间戳确保唯一性)
+        // 重命名文件
+        const renamedFiles = downloadedFiles.map(filePath => {
+            const originalName = path.basename(filePath);
+            if (originalName === '-.mp3' || originalName === '.mp3') {
+                const newName = `music-${Date.now()}.mp3`;
+                const newPath = path.join(path.dirname(filePath), newName);
+                fs.renameSync(filePath, newPath);
+                return newPath;
+            }
+            return filePath;
+        });
+
+        // 创建 release tag
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const tag = `download-${issueNumber}-${timestamp}`;
 
-        // 上传文件到 release
-        const { release, assets } = await createRelease(octokit, owner, repo, tag, downloadedFiles);
+        // 使用重命名后的文件路径
+        const { release, assets } = await createRelease(octokit, owner, repo, tag, renamedFiles);
 
         // 在 issue 中添加下载链接
         const downloadLinks = assets.map(asset => {
