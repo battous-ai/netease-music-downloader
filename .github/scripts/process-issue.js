@@ -85,9 +85,9 @@ async function main() {
 
         // 执行下载命令
         if (type === 'song') {
-            execSync(`node dist/index.js -s ${musicId}`, { stdio: 'inherit' });
+            execSync(`node dist/index.js download ${musicId}`, { stdio: 'inherit' });
         } else {
-            execSync(`node dist/index.js -a ${musicId}`, { stdio: 'inherit' });
+            execSync(`node dist/index.js album ${musicId}`, { stdio: 'inherit' });
         }
 
         // 查找下载的音乐文件
