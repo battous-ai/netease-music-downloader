@@ -120,7 +120,7 @@ async function downloadMusic(id) {
 // 修改 getAlbumInfo 函数，返回更多信息
 async function getAlbumInfo(albumId) {
   try {
-    // 先获取专辑页面
+    // 先获取专辑面
     const response = await axios.get(`https://music.163.com/album?id=${albumId}`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -203,7 +203,7 @@ program
     musicIds = [...new Set(musicIds)];
 
     if (musicIds.length === 0) {
-      console.error('请提供至少一个音乐ID');
+      console.error('请提供至少一个音ID');
       process.exit(1);
     }
 
@@ -276,12 +276,32 @@ program
 
           // 检查歌曲是否可用
           const checkUrl = `https://music.163.com/song/media/outer/url?id=${song.id}.mp3`;
-          const checkResponse = await axios.head(checkUrl);
-          const contentLength = parseInt(checkResponse.headers['content-length'], 10);
+          let contentLength;
 
-          // 如果文件大小小于 10KB，很可能是因为歌曲已下架
-          if (contentLength < 10 * 1024) {
-            console.log(`\n[${index + 1}/${songs.length}] ${displayName} (歌曲已下架，跳过下载)`);
+          try {
+            const checkResponse = await axios.head(checkUrl, {
+              maxRedirects: 5,  // 允许跟随重定向
+              validateStatus: function (status) {
+                return status >= 200 && status < 400; // 只接受2xx和3xx的状态码
+              }
+            });
+
+            contentLength = parseInt(checkResponse.headers['content-length'], 10);
+
+            // 如果无法获取文件大小或文件太小，认为歌曲不可用
+            if (isNaN(contentLength) || contentLength < 1024 * 1024) { // 改为1MB
+              console.log(`\n[${index + 1}/${songs.length}] ${displayName} (歌曲已下架或无版权，跳过下载)`);
+              continue;
+            }
+
+            // 获取最终URL，检查是否重定向到错误页面
+            const finalUrl = checkResponse.request.res.responseUrl || checkUrl;
+            if (finalUrl.includes('music.163.com/404')) {
+              console.log(`\n[${index + 1}/${songs.length}] ${displayName} (歌曲不可用，跳过下载)`);
+              continue;
+            }
+          } catch (error) {
+            console.log(`\n[${index + 1}/${songs.length}] ${displayName} (歌曲不可用，跳过下载)`);
             continue;
           }
 
