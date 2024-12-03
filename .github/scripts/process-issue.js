@@ -88,9 +88,9 @@ async function main() {
 
         // 执行下载命令
         if (type === 'song') {
-            execSync(`node dist/index.js download ${musicId} --name "song-${musicId}"`, { stdio: 'inherit' });
+            execSync(`node dist/index.js download ${musicId}`, { stdio: 'inherit' });
         } else {
-            execSync(`node dist/index.js album ${musicId} --name "album-${musicId}"`, { stdio: 'inherit' });
+            execSync(`node dist/index.js album ${musicId}`, { stdio: 'inherit' });
         }
 
         // 查找并重命名下载的文件
@@ -100,15 +100,18 @@ async function main() {
             throw new Error('没有找到下载的文件');
         }
 
-        // 重命名文件
+        // 重命名文件，只处理异常的文件名
         const renamedFiles = downloadedFiles.map(filePath => {
             const originalName = path.basename(filePath);
+            // 只有当文件名异常时才重命名
             if (originalName === '-.mp3' || originalName === '.mp3') {
-                const newName = `music-${Date.now()}.mp3`;
+                // 如果无法获取歌曲信息，使用默认名称
+                const newName = `song-${musicId}-${Date.now()}.mp3`;
                 const newPath = path.join(path.dirname(filePath), newName);
                 fs.renameSync(filePath, newPath);
                 return newPath;
             }
+            // 保持原有的歌手-歌曲名格式
             return filePath;
         });
 
