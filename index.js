@@ -120,7 +120,7 @@ async function downloadMusic(id) {
 // 修改 getAlbumInfo 函数，返回更多信息
 async function getAlbumInfo(albumId) {
   try {
-    // 先获取专辑面
+    // 先获取专辑��
     const response = await axios.get(`https://music.163.com/album?id=${albumId}`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -272,7 +272,7 @@ program
         try {
           const songName = song.name;
           const artistName = song.artists?.[0]?.name;
-          const displayName = `${songName} - ${artistName}`;
+          const displayName = `${artistName}-${songName}`;
 
           // 检查歌曲是否可用
           const checkUrl = `https://music.163.com/song/media/outer/url?id=${song.id}.mp3`;
@@ -289,7 +289,7 @@ program
             contentLength = parseInt(checkResponse.headers['content-length'], 10);
 
             // 如果无法获取文件大小或文件太小，认为歌曲不可用
-            if (isNaN(contentLength) || contentLength < 1024 * 1024) { // 改为1MB
+            if (isNaN(contentLength) || contentLength < 500 * 1024) { // 改为500KB
               console.log(`\n[${index + 1}/${songs.length}] ${displayName} (歌曲已下架或无版权，跳过下载)`);
               continue;
             }
