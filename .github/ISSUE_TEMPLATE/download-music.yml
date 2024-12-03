@@ -1,6 +1,6 @@
 name: 下载音乐
 description: 提交音乐下载请求
-title: "[下载]: "
+title: "下载音乐"
 labels: ["download"]
 assignees: []
 
@@ -21,7 +21,7 @@ body:
     attributes:
       label: 音乐ID
       description: 输入网易云音乐的歌曲ID或专辑ID
-      placeholder: 例如：2010653
+      placeholder: "例如: 26619423"
     validations:
       required: true
       pattern: ^\d+$
