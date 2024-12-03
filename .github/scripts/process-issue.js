@@ -5,6 +5,9 @@ const fs = require('fs');
 const glob = require('glob');
 
 async function createRelease(octokit, owner, repo, tag, files) {
+    console.log(`Creating release with tag: ${tag}`);
+    console.log(`Files: ${files}`);
+
     // 创建一个新的 release
     const { data: release } = await octokit.repos.createRelease({
         owner,
@@ -21,11 +24,14 @@ async function createRelease(octokit, owner, repo, tag, files) {
         const content = fs.readFileSync(filePath);
         let fileName = path.basename(filePath);
 
+        console.log(`Uploading asset: ${fileName}`);
+
         // 只处理异常文件名
         if (fileName === '-.mp3' || fileName === '.mp3') {
             fileName = `song-${Date.now()}.mp3`;
         }
 
+        console.log(`Uploading asset: ${fileName}`);
         const { data: asset } = await octokit.repos.uploadReleaseAsset({
             owner,
             repo,
@@ -43,6 +49,7 @@ async function createRelease(octokit, owner, repo, tag, files) {
             name: fileName,
             browser_download_url: asset.browser_download_url
         });
+        console.log(JSON.stringify(uploadedAssets, null, 2));
     }
 
     return { release, assets: uploadedAssets };
