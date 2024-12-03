@@ -50,13 +50,25 @@ async function main() {
     const issueNumber = event.issue.number;
 
     try {
-        // 解析 issue body (现在是 JSON 格式)
+        // 解析 issue body
         const body = event.issue.body;
-        const formData = JSON.parse(body);
 
-        // 获取下载类型和ID
-        const type = formData.type === '单曲' ? 'song' : 'album';
-        const musicId = formData.music_id;
+        // 从 body 中提取表单数据
+        const typeMatch = body.match(/### 下载类型\s*\n\n(.+?)(?=\n|$)/);
+        const idMatch = body.match(/### 音乐ID\s*\n\n(.+?)(?=\n|$)/);
+
+        if (!typeMatch || !idMatch) {
+            await octokit.issues.createComment({
+                owner,
+                repo,
+                issue_number: issueNumber,
+                body: "无法解析请求内容，请使用正确的issue模板"
+            });
+            return;
+        }
+
+        const type = typeMatch[1].trim() === '单曲' ? 'song' : 'album';
+        const musicId = idMatch[1].trim();
 
         if (!musicId || !/^\d+$/.test(musicId)) {
             await octokit.issues.createComment({
