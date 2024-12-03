@@ -15,7 +15,9 @@
     "axios": "^1.6.7",
     "cheerio": "^1.0.0-rc.12",
     "cli-progress": "^3.12.0",
-    "commander": "^12.0.0"
+    "commander": "^12.0.0",
+    "@octokit/rest": "^19.0.7",
+    "glob": "^10.3.10"
   },
   "devDependencies": {
     "@types/cli-progress": "^3.11.5",
