@@ -20,7 +20,7 @@ A simple and easy-to-use tool for downloading music from NetEase Cloud Music. Su
 
 The easiest way to use, no installation required:
 
-1. Visit [Issues page](https://github.com/your-username/netease-music-downloader/issues)
+1. Visit [Issues page](https://github.com/Gaohaoyang/netease-music-downloader/issues)
 2. Click "New Issue"
 3. Choose "Download Music" template
 4. Fill in the type (song/album) and music ID
@@ -45,7 +45,7 @@ For local development:
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/netease-music-downloader.git
+git clone https://github.com/Gaohaoyang/netease-music-downloader.git
 
 # Enter directory
 cd netease-music-downloader

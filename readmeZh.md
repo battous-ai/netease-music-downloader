@@ -18,7 +18,7 @@
 
 最简单的使用方式，无需安装任何工具：
 
-1. 访问 [Issues 页面](https://github.com/your-username/netease-music-downloader/issues)
+1. 访问 [Issues 页面](https://github.com/Gaohaoyang/netease-music-downloader/issues)
 2. 点击 "New Issue"
 3. 选择 "下载音乐" 模板
 4. 填写下载类型（单曲/专辑）和音乐ID
@@ -43,7 +43,7 @@ npx netease-dl album 34836039
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-username/netease-music-downloader.git
+git clone https://github.com/Gaohaoyang/netease-music-downloader.git
 
 # 进入目录
 cd netease-music-downloader
