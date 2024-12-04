@@ -110,9 +110,14 @@ async function updateProgress(octokit, owner, repo, issueNumber, message) {
 }
 
 async function main() {
+    console.log('Starting process-issue.js...');
+
     const octokit = new Octokit({
         auth: process.env.GITHUB_TOKEN
     });
+
+    console.log('GITHUB_REPOSITORY:', process.env.GITHUB_REPOSITORY);
+    console.log('GITHUB_EVENT_PATH:', process.env.GITHUB_EVENT_PATH);
 
     // 添加环境变量检查和本地开发支持
     if (!process.env.GITHUB_REPOSITORY) {
@@ -124,6 +129,8 @@ async function main() {
     }
 
     const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
+    console.log('Owner:', owner);
+    console.log('Repo:', repo);
 
     // 添加事件路径检查
     if (!process.env.GITHUB_EVENT_PATH) {
@@ -133,6 +140,7 @@ async function main() {
 
     const eventPath = process.env.GITHUB_EVENT_PATH;
     const event = require(eventPath);
+    console.log('Event data:', JSON.stringify(event, null, 2));
 
     if (!event || !event.issue) {
         console.error('Error: Invalid event data');
@@ -144,8 +152,12 @@ async function main() {
     try {
         // 解析 issue body
         const body = event.issue.body;
+        console.log('Issue body:', body);
+
         const typeMatch = body.match(/### 下载类型\s*\n\n(.+?)(?=\n|$)/);
         const idMatch = body.match(/### 音乐ID\s*\n\n(.+?)(?=\n|$)/);
+        console.log('Type match:', typeMatch);
+        console.log('ID match:', idMatch);
 
         if (!typeMatch || !idMatch) {
             await updateProgress(octokit, owner, repo, issueNumber,
@@ -163,6 +175,7 @@ async function main() {
         }
 
         if (type === 'song') {
+            console.log('Downloading song:', musicId);
             try {
                 // 执行下载并捕获输出
                 const output = execSync(`node dist/index.js download ${musicId}`, {
@@ -188,9 +201,11 @@ async function main() {
                         `ℹ️ 获取到歌曲信息: ${songInfo}`);
                 }
             } catch (error) {
+                console.error('Error during song download:', error);
                 throw error;
             }
         } else {
+            console.log('Downloading album:', musicId);
             const output = execSync(`node dist/index.js album ${musicId}`, {
                 stdio: 'pipe',
                 encoding: 'utf8'
@@ -239,7 +254,7 @@ async function main() {
         execSync('rm -rf downloads/*');
 
     } catch (error) {
-        console.error('Error details:', error);
+        console.error('Error in main process:', error);
         // 根据错误类型返回不同的提示
         let errorMessage = error.message;
         if (error.message.includes('无版权') || error.message.includes('已下架')) {
@@ -262,4 +277,18 @@ async function main() {
     }
 }
 
-main().catch(console.error);
+// 添加未捕获异常处理
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (error) => {
+    console.error('Unhandled Rejection:', error);
+    process.exit(1);
+});
+
+main().catch(error => {
+    console.error('Top level error:', error);
+    process.exit(1);
+});
