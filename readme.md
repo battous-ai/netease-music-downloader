@@ -34,17 +34,11 @@ The easiest way to use, no installation required:
 No installation needed, run directly:
 
 ```bash
-# Download a song (using full name)
+# Download a song
 npx netease-music-downloader download 426832090
 
-# Download a song (using short name)
-npx netease-dl download 426832090
-
-# Download an album (using full name)
+# Download an album
 npx netease-music-downloader album 34836039
-
-# Download an album (using short name)
-npx netease-dl album 34836039
 ```
 
 ### 3. Local Development

@@ -32,17 +32,11 @@
 无需安装，直接运行：
 
 ```bash
-# 下载单曲（使用完整名称）
+# 下载单曲
 npx netease-music-downloader download 426832090
 
-# 下载单曲（使用简短名称）
-npx netease-dl download 426832090
-
-# 下载专辑（使用完整名称）
+# 下载专辑
 npx netease-music-downloader album 34836039
-
-# 下载专辑（使用简短名称）
-npx netease-dl album 34836039
 ```
 
 ### 3. 本地开发运行
