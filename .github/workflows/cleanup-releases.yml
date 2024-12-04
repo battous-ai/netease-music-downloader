@@ -2,14 +2,14 @@ name: Cleanup Old Releases
 
 on:
   schedule:
-    - cron: '0 */3 * * *'  # 每3小时运行一次
-  workflow_dispatch:        # 添加手动触发功能
+    - cron: '0 */3 * * *' # 每3小时运行一次
+  workflow_dispatch: # 添加手动触发功能
 
 jobs:
   cleanup:
     runs-on: ubuntu-latest
     permissions:
-      contents: write      # 用于删除 releases
+      contents: write # 用于删除 releases
 
     steps:
       - uses: actions/checkout@v3
@@ -18,9 +18,13 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '22'
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
 
       - name: Cleanup old releases
         env:

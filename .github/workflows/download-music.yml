@@ -8,8 +8,8 @@ jobs:
   download:
     runs-on: ubuntu-latest
     permissions:
-      contents: write      # 用于创建 releases
-      issues: write       # 用于更新 issues
+      contents: write # 用于创建 releases
+      issues: write # 用于更新 issues
 
     steps:
       - name: Initial Response
@@ -30,11 +30,16 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
 
       - name: Build project
-        run: npm run build
+        run: pnpm run build
 
       - name: Parse issue and download music
         env:
