@@ -5,7 +5,7 @@ const fs = require('fs');
 const glob = require('glob');
 const archiver = require('archiver');
 
-async function createZipFile(files, zipName) {
+async function createZipFile(files, zipName, type, musicId) {
     return new Promise((resolve, reject) => {
         const output = fs.createWriteStream(zipName);
         const archive = archiver('zip', {
@@ -24,21 +24,45 @@ async function createZipFile(files, zipName) {
         archive.pipe(output);
 
         // 添加文件到 zip
-        files.forEach(file => {
-            archive.file(file, { name: path.basename(file) });
-        });
+        if (type === 'album') {
+            // 获取专辑目录名（假设是downloads目录下的第一个目录）
+            const albumDirs = glob.sync('downloads/*/', { directories: true });
+            if (albumDirs.length > 0) {
+                const albumDir = path.basename(albumDirs[0]);
+                console.log(`Found album directory: ${albumDir}`);
+
+                // 将文件添加到对应的专辑目录中
+                files.forEach(file => {
+                    const relativePath = path.relative('downloads', file);
+                    archive.file(file, { name: relativePath });
+                });
+            } else {
+                console.log('No album directory found, using default structure');
+                const defaultAlbumDir = `album-${musicId}`;
+                files.forEach(file => {
+                    archive.file(file, {
+                        name: path.join(defaultAlbumDir, path.basename(file))
+                    });
+                });
+            }
+        } else {
+            // 单曲直接添加到根目录
+            files.forEach(file => {
+                archive.file(file, { name: path.basename(file) });
+            });
+        }
 
         archive.finalize();
     });
 }
 
-async function createRelease(octokit, owner, repo, tag, files) {
+async function createRelease(octokit, owner, repo, tag, files, type, musicId) {
     console.log(`Creating release with tag: ${tag}`);
     console.log(`Files to compress: ${files}`);
 
     // 创建 zip 文件
     const zipName = `music-${tag}.zip`;
-    await createZipFile(files, zipName);
+    await createZipFile(files, zipName, type, musicId);
 
     // 创建一个新的 release
     const { data: release } = await octokit.repos.createRelease({
@@ -117,33 +141,64 @@ async function main() {
             return;
         }
 
+        // 确保下载目录存在
+        if (!fs.existsSync('downloads')) {
+            fs.mkdirSync('downloads', { recursive: true });
+        }
+
         // 先构建项目
+        console.log('Building project...');
         execSync('npm run build', { stdio: 'inherit' });
 
         // 执行下载命令
         if (type === 'song') {
-            // 执行下载并捕获输出
-            const output = execSync(`node dist/index.js download ${musicId}`, {
-                stdio: ['inherit', 'pipe', 'inherit'],
-                encoding: 'utf8'
-            });
+            console.log(`Downloading song ${musicId}...`);
+            try {
+                // 执行下载并捕获输出
+                const output = execSync(`node dist/index.js download ${musicId}`, {
+                    stdio: 'pipe',
+                    encoding: 'utf8'
+                });
+                console.log('Download output:', output);
 
-            // 从输出中获取歌曲信息
-            const songNameMatch = output.match(/歌曲信息: (.+)/);
-            const songName = songNameMatch ? songNameMatch[1].trim() : `song-${musicId}`;
+                // 从输出中获取歌曲信息
+                const songNameMatch = output.match(/歌曲信息:\s*(.+?)(?:\n|$)/);
+                if (!songNameMatch) {
+                    console.warn('无法从输出中解析歌曲信息');
+                }
 
-            // 重命名文件
-            const downloadedFile = glob.sync('downloads/**/*.mp3')[0];
-            if (downloadedFile && path.basename(downloadedFile) === '-.mp3') {
+                const songName = songNameMatch ?
+                    songNameMatch[1].trim().replace(/[<>:"/\\|?*]/g, '-') :
+                    `song-${musicId}-${Date.now()}`;
+
+                // 检查下载文件
+                const downloadedFiles = glob.sync('downloads/**/*.mp3');
+                console.log('Found downloaded files:', downloadedFiles);
+
+                if (downloadedFiles.length === 0) {
+                    throw new Error('下载失败：未找到下载的文件');
+                }
+
+                // 重命名文件
+                const downloadedFile = downloadedFiles[0];
                 const newPath = path.join(path.dirname(downloadedFile), `${songName}.mp3`);
                 fs.renameSync(downloadedFile, newPath);
+                console.log(`File renamed to: ${newPath}`);
+
+            } catch (error) {
+                console.error('Download command failed:', error);
+                throw error;
             }
         } else {
-            execSync(`node dist/index.js album ${musicId}`, { stdio: 'inherit' });
+            console.log(`Downloading album ${musicId}...`);
+            execSync(`node dist/index.js album ${musicId}`, {
+                stdio: 'inherit'
+            });
         }
 
         // 查找下载的文件
         const downloadedFiles = glob.sync('downloads/**/*.mp3');
+        console.log('Final check - found files:', downloadedFiles);
 
         if (downloadedFiles.length === 0) {
             throw new Error('没有找到下载的文件');
@@ -153,8 +208,16 @@ async function main() {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const tag = `download-${issueNumber}-${timestamp}`;
 
-        // 使用下载的文件路径
-        const { release, assets } = await createRelease(octokit, owner, repo, tag, downloadedFiles);
+        // 使用下载的文件路径，传入类型和音乐ID
+        const { release, assets } = await createRelease(
+            octokit,
+            owner,
+            repo,
+            tag,
+            downloadedFiles,
+            type,
+            musicId
+        );
 
         // 在 issue 中添加下载链接
         const downloadLinks = assets.map(asset => {
@@ -172,13 +235,14 @@ async function main() {
         execSync('rm -rf downloads/*');
 
     } catch (error) {
-        console.error(error);
+        console.error('Error details:', error);
         await octokit.issues.createComment({
             owner,
             repo,
             issue_number: issueNumber,
-            body: `下载失败：${error.message}`
+            body: `下载失败：${error.message}\n\n详细错误：\n\`\`\`\n${error.stack}\n\`\`\``
         });
+        process.exit(1);
     } finally {
         await octokit.issues.update({
             owner,
