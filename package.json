@@ -17,9 +17,23 @@
     "netease",
     "music",
     "downloader",
-    "cli"
+    "cli",
+    "netease-cloud-music",
+    "music-downloader",
+    "网易云音乐"
   ],
-  "author": "Gaohaoyang",
+  "author": {
+    "name": "Gaohaoyang",
+    "url": "https://github.com/Gaohaoyang"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gaohaoyang/netease-music-downloader.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Gaohaoyang/netease-music-downloader/issues"
+  },
+  "homepage": "https://github.com/Gaohaoyang/netease-music-downloader#readme",
   "license": "MIT",
   "scripts": {
     "start": "ts-node src/index.ts",

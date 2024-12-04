@@ -55,6 +55,7 @@ jobs:
         run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
       - name: Create a tag
         uses: salsify/action-detect-and-tag-new-version@v2
         if: steps.check.outputs.version_changed == 'true'
