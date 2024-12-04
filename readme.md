@@ -1,90 +1,91 @@
-# 网易云音乐下载器
+# NetEase Music Downloader
 
-一个简单易用的网易云音乐下载工具，支持单曲和专辑下载。提供多种使用方式，满足不同场景的需求。
+[中文文档](./readmeZh.md)
 
-## 功能特点
+A simple and easy-to-use tool for downloading music from NetEase Cloud Music. Supporting both single songs and albums with multiple ways to use.
 
-- ✨ 支持单曲/多曲下载
-- 📀 支持整张专辑下载
-- 🚀 显示下载进度条
-- 🎵 自动获取歌手和歌名
-- 📂 自动创建专辑目录
-- ⚡️ 自动跳过已下载的文件
-- 🔍 自动检测下架或无版权歌曲
+## Features
 
-## 使用方法
+- ✨ Support single/multiple song downloads
+- 📀 Support full album downloads
+- 🚀 Show download progress
+- 🎵 Auto-fetch artist and song names
+- 📂 Auto-create album directories
+- ⚡️ Auto-skip downloaded files
+- 🔍 Auto-detect unavailable or copyright-protected songs
 
-### 1. 通过 GitHub Issue 下载（推荐）
+## Usage
 
-最简单的使用方式，无需安装任何工具：
+### 1. Download via GitHub Issue (Recommended)
 
-1. 访问 [Issues 页面](https://github.com/your-username/netease-music-downloader/issues)
-2. 点击 "New Issue"
-3. 选择 "下载音乐" 模板
-4. 填写下载类型（单曲/专辑）和音乐ID
-5. 提交 issue 后会自动开始下载
-6. 下载完成后会在 issue 中提供下载链接
+The easiest way to use, no installation required:
 
-### 2. 通过 npx 使用
+1. Visit [Issues page](https://github.com/your-username/netease-music-downloader/issues)
+2. Click "New Issue"
+3. Choose "Download Music" template
+4. Fill in the type (song/album) and music ID
+5. Submit the issue and download will start automatically
+6. Download links will be provided in the issue comments
 
-无需安装，直接运行：
+### 2. Use via npx
+
+No installation needed, run directly:
 
 ```bash
-# 下载单曲
+# Download a song
 npx netease-dl download 426832090
 
-# 下载专辑
+# Download an album
 npx netease-dl album 34836039
 ```
 
-### 3. 本地开发运行
+### 3. Local Development
 
-如果需要进行本地开发：
+For local development:
 
 ```bash
-# 克隆仓库
+# Clone repository
 git clone https://github.com/your-username/netease-music-downloader.git
 
-# 进入目录
+# Enter directory
 cd netease-music-downloader
 
-# 安装依赖
+# Install dependencies
 pnpm install
 
-# 运行命令
-pnpm start download 426832090  # 下载单曲
-pnpm start album 34836039     # 下载专辑
+# Run commands
+pnpm start download 426832090  # Download a song
+pnpm start album 34836039     # Download an album
 ```
 
-## 如何获取音乐ID？
+## How to Get Music ID?
 
-1. 打开网易云音乐网页版或客户端
-2. 找到想要下载的歌曲或专辑
-3. 复制链接，从链接中获取ID：
-   - 单曲链接：`https://music.163.com/#/song?id=426832090` 中的 `426832090`
-   - 专辑链接：`https://music.163.com/#/album?id=34836039` 中的 `34836039`
+1. Open NetEase Cloud Music website or client
+2. Find the song or album you want to download
+3. Copy the link and get the ID from it:
+   - Song link: `426832090` from `https://music.163.com/#/song?id=426832090`
+   - Album link: `34836039` from `https://music.163.com/#/album?id=34836039`
 
-## 下载目录结构
+## Download Directory Structure
 
 ```
 downloads/
-├── 歌手名-歌曲名.mp3              # 单曲下载
-└── 专辑名/                       # 专辑下载
-    ├── 01.歌手名-歌曲1.mp3
-    ├── 02.歌手名-歌曲2.mp3
+├── artist-songname.mp3              # Single song
+└── album-name/                      # Album
+    ├── 01.artist-song1.mp3
+    ├── 02.artist-song2.mp3
     └── ...
 ```
 
-## 注意事项
+## Notes
 
-- 仅供个人学习使用
-- 请遵守相关法律法规
-- 部分音乐可能因版权限制无法下载
-- 下载的音乐文件会在 3 小时后自动清理
-- 需要稳定的网络连接
-- 文件名中的特殊字符会被自动移除
+- For personal learning use only
+- Please comply with relevant laws and regulations
+- Some music may be unavailable due to copyright restrictions
+- Downloaded music files will be automatically cleaned up after 3 hours
+- Stable network connection required
+- Special characters in filenames will be automatically removed
 
 ## License
 
 MIT
-

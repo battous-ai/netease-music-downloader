@@ -1,6 +1,6 @@
-name: 下载音乐
-description: 提交音乐下载请求
-title: "下载音乐"
+name: Download Music | 下载音乐
+description: Submit music download request | 提交音乐下载请求
+title: "Download Music | 下载音乐"
 labels: ["download"]
 assignees: []
 
@@ -8,20 +8,20 @@ body:
   - type: dropdown
     id: type
     attributes:
-      label: 下载类型
-      description: 选择要下载的内容类型
+      label: Download Type | 下载类型
+      description: Choose the content type to download | 选择要下载的内容类型
       options:
-        - 单曲
-        - 专辑
+        - Single Song | 单曲
+        - Album | 专辑
     validations:
       required: true
 
   - type: input
     id: music_id
     attributes:
-      label: 音乐ID
-      description: 输入网易云音乐的歌曲ID或专辑ID
-      placeholder: "例如: 26619423"
+      label: Music ID | 音乐ID
+      description: Enter NetEase Cloud Music song ID or album ID | 输入网易云音乐的歌曲ID或专辑ID
+      placeholder: "Example/例如: 26619423"
     validations:
       required: true
       pattern: ^\d+$
@@ -29,8 +29,8 @@ body:
   - type: checkboxes
     id: terms
     attributes:
-      label: 使用须知
-      description: 请确认以下内容
+      label: Terms of Use | 使用须知
+      description: Please confirm the following | 请确认以下内容
       options:
-        - label: 我确认这是合法的下载请求，且仅用于个人用途
+        - label: I confirm this is a legal download request for personal use only | 我确认这是合法的下载请求，且仅用于个人用途
           required: true
