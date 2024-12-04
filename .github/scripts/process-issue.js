@@ -154,8 +154,9 @@ async function main() {
         const body = event.issue.body;
         console.log('Issue body:', body);
 
-        const typeMatch = body.match(/### 下载类型\s*\n\n(.+?)(?=\n|$)/);
-        const idMatch = body.match(/### 音乐ID\s*\n\n(.+?)(?=\n|$)/);
+        // 使用新的正则表达式匹配
+        const typeMatch = body.match(/### Download Type 下载类型\s*\n\n(.+?)(?=\n|$)/);
+        const idMatch = body.match(/### Music ID 音乐ID\s*\n\n(.+?)(?=\n|$)/);
         console.log('Type match:', typeMatch);
         console.log('ID match:', idMatch);
 
@@ -165,8 +166,12 @@ async function main() {
             return;
         }
 
-        const type = typeMatch[1].trim() === '单曲' ? 'song' : 'album';
+        // 修改类型判断逻辑
+        const type = typeMatch[1].trim().startsWith('Single Song') ? 'song' : 'album';
         const musicId = idMatch[1].trim();
+
+        console.log('Parsed type:', type);
+        console.log('Parsed musicId:', musicId);
 
         if (!musicId || !/^\d+$/.test(musicId)) {
             await updateProgress(octokit, owner, repo, issueNumber,
