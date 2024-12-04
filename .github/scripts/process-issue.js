@@ -199,7 +199,7 @@ async function main() {
                     return;
                 }
 
-                const songNameMatch = output.match(/歌曲信息:\s*(.+?)(?:\n|$)/);
+                const songNameMatch = output.match(/歌曲信息 Song info:\s*(.+?)(?:\n|$)/);
                 if (songNameMatch) {
                     songInfo = songNameMatch[1].trim();
                     await updateProgress(octokit, owner, repo, issueNumber,
@@ -217,7 +217,7 @@ async function main() {
             });
 
             // 从输出中解析专辑信息
-            const albumInfoMatch = output.match(/专辑信息:\s*(.+?)(?:\n|$)/);
+            const albumInfoMatch = output.match(/专辑信息 Album info:\s*(.+?)(?:\n|$)/);
             if (albumInfoMatch) {
                 albumInfo = albumInfoMatch[1].trim();
                 await updateProgress(octokit, owner, repo, issueNumber,
