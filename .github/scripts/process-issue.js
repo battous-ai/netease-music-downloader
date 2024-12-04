@@ -3,10 +3,42 @@ const { execSync } = require("child_process");
 const path = require('path');
 const fs = require('fs');
 const glob = require('glob');
+const archiver = require('archiver');
+
+async function createZipFile(files, zipName) {
+    return new Promise((resolve, reject) => {
+        const output = fs.createWriteStream(zipName);
+        const archive = archiver('zip', {
+            zlib: { level: 9 } // 最高压缩级别
+        });
+
+        output.on('close', () => {
+            console.log(`ZIP created: ${archive.pointer()} bytes`);
+            resolve(zipName);
+        });
+
+        archive.on('error', (err) => {
+            reject(err);
+        });
+
+        archive.pipe(output);
+
+        // 添加文件到 zip
+        files.forEach(file => {
+            archive.file(file, { name: path.basename(file) });
+        });
+
+        archive.finalize();
+    });
+}
 
 async function createRelease(octokit, owner, repo, tag, files) {
     console.log(`Creating release with tag: ${tag}`);
-    console.log(`Files: ${files}`);
+    console.log(`Files to compress: ${files}`);
+
+    // 创建 zip 文件
+    const zipName = `music-${tag}.zip`;
+    await createZipFile(files, zipName);
 
     // 创建一个新的 release
     const { data: release } = await octokit.repos.createRelease({
@@ -18,41 +50,30 @@ async function createRelease(octokit, owner, repo, tag, files) {
         draft: false
     });
 
-    // 上传所有文件到 release
-    const uploadedAssets = [];
-    for (const filePath of files) {
-        const content = fs.readFileSync(filePath);
-        let fileName = path.basename(filePath);
-
-        console.log(`Uploading asset: ${fileName}`);
-
-        // 只处理异常文件名
-        if (fileName === '-.mp3' || fileName === '.mp3') {
-            fileName = `song-${Date.now()}.mp3`;
+    // 上传 zip 文件到 release
+    const content = fs.readFileSync(zipName);
+    const { data: asset } = await octokit.repos.uploadReleaseAsset({
+        owner,
+        repo,
+        release_id: release.id,
+        name: zipName,
+        data: content,
+        headers: {
+            'content-type': 'application/zip',
+            'content-length': content.length
         }
+    });
 
-        console.log(`Uploading asset: ${fileName}`);
-        const { data: asset } = await octokit.repos.uploadReleaseAsset({
-            owner,
-            repo,
-            release_id: release.id,
-            name: fileName,
-            data: content,
-            headers: {
-                'content-type': 'audio/mpeg',
-                'content-length': content.length
-            }
-        });
+    // 清理临时文件
+    fs.unlinkSync(zipName);
 
-        // 保存文件信息
-        uploadedAssets.push({
-            name: fileName,
+    return {
+        release,
+        assets: [{
+            name: zipName,
             browser_download_url: asset.browser_download_url
-        });
-        console.log(JSON.stringify(uploadedAssets, null, 2));
-    }
-
-    return { release, assets: uploadedAssets };
+        }]
+    };
 }
 
 async function main() {
