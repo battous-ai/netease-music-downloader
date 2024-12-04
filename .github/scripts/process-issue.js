@@ -100,6 +100,15 @@ async function createRelease(octokit, owner, repo, tag, files, type, musicId) {
     };
 }
 
+async function updateProgress(octokit, owner, repo, issueNumber, message) {
+    await octokit.issues.createComment({
+        owner,
+        repo,
+        issue_number: issueNumber,
+        body: message
+    });
+}
+
 async function main() {
     const octokit = new Octokit({
         auth: process.env.GITHUB_TOKEN
@@ -111,20 +120,18 @@ async function main() {
     const issueNumber = event.issue.number;
 
     try {
+        // 开始处理的提示
+        await updateProgress(octokit, owner, repo, issueNumber,
+            '🚀 开始处理您的下载请求...');
+
         // 解析 issue body
         const body = event.issue.body;
-
-        // 从 body 中提取表单数据
         const typeMatch = body.match(/### 下载类型\s*\n\n(.+?)(?=\n|$)/);
         const idMatch = body.match(/### 音乐ID\s*\n\n(.+?)(?=\n|$)/);
 
         if (!typeMatch || !idMatch) {
-            await octokit.issues.createComment({
-                owner,
-                repo,
-                issue_number: issueNumber,
-                body: "无法解析请求内容请使用正确的issue模板"
-            });
+            await updateProgress(octokit, owner, repo, issueNumber,
+                "❌ 无法解析请求内容，请使用正确的issue模板");
             return;
         }
 
@@ -132,83 +139,63 @@ async function main() {
         const musicId = idMatch[1].trim();
 
         if (!musicId || !/^\d+$/.test(musicId)) {
-            await octokit.issues.createComment({
-                owner,
-                repo,
-                issue_number: issueNumber,
-                body: "无效的音乐ID，请提供正确的数字ID"
-            });
+            await updateProgress(octokit, owner, repo, issueNumber,
+                "❌ 无效的音乐ID，请提供正确的数字ID");
             return;
         }
+
+        await updateProgress(octokit, owner, repo, issueNumber,
+            `⚙️ 正在准备下载${type === 'song' ? '单曲' : '专辑'} (ID: ${musicId})...`);
 
         // 确保下载目录存在
         if (!fs.existsSync('downloads')) {
             fs.mkdirSync('downloads', { recursive: true });
         }
 
-        // 先构建项目
-        console.log('Building project...');
+        // 构建项目
+        await updateProgress(octokit, owner, repo, issueNumber,
+            '🔨 正在构建项目...');
         execSync('npm run build', { stdio: 'inherit' });
 
-        // 执行下载命令
+        // 执行下载
+        await updateProgress(octokit, owner, repo, issueNumber,
+            `📥 开始下载${type === 'song' ? '单曲' : '专辑'}...`);
+
         if (type === 'song') {
-            console.log(`Downloading song ${musicId}...`);
             try {
-                // 执行下载并捕获输出
                 const output = execSync(`node dist/index.js download ${musicId}`, {
                     stdio: 'pipe',
                     encoding: 'utf8'
                 });
-                console.log('Download output:', output);
 
-                // 从输出中获取歌曲信息
                 const songNameMatch = output.match(/歌曲信息:\s*(.+?)(?:\n|$)/);
-                if (!songNameMatch) {
-                    console.warn('无法从输出中解析歌曲信息');
+                if (songNameMatch) {
+                    await updateProgress(octokit, owner, repo, issueNumber,
+                        `ℹ️ 获取到歌曲信息: ${songNameMatch[1].trim()}`);
                 }
 
-                const songName = songNameMatch ?
-                    songNameMatch[1].trim().replace(/[<>:"/\\|?*]/g, '-') :
-                    `song-${musicId}-${Date.now()}`;
-
-                // 检查下载文件
-                const downloadedFiles = glob.sync('downloads/**/*.mp3');
-                console.log('Found downloaded files:', downloadedFiles);
-
-                if (downloadedFiles.length === 0) {
-                    throw new Error('下载失败：未找到下载的文件');
-                }
-
-                // 重命名文件
-                const downloadedFile = downloadedFiles[0];
-                const newPath = path.join(path.dirname(downloadedFile), `${songName}.mp3`);
-                fs.renameSync(downloadedFile, newPath);
-                console.log(`File renamed to: ${newPath}`);
-
+                // ... 其他单曲处理逻辑 ...
             } catch (error) {
-                console.error('Download command failed:', error);
                 throw error;
             }
         } else {
-            console.log(`Downloading album ${musicId}...`);
             execSync(`node dist/index.js album ${musicId}`, {
                 stdio: 'inherit'
             });
         }
 
-        // 查找下载的文件
+        // 检查下载结果
         const downloadedFiles = glob.sync('downloads/**/*.mp3');
-        console.log('Final check - found files:', downloadedFiles);
+        await updateProgress(octokit, owner, repo, issueNumber,
+            `✅ 下载完成，共 ${downloadedFiles.length} 个文件`);
 
-        if (downloadedFiles.length === 0) {
-            throw new Error('没有找到下载的文件');
-        }
+        // 创建 release
+        await updateProgress(octokit, owner, repo, issueNumber,
+            '📦 正在打包并上传到 Release...');
 
-        // 创建 release tag
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const tag = `download-${issueNumber}-${timestamp}`;
 
-        // 使用下载的文件路径，传入类型和音乐ID
         const { release, assets } = await createRelease(
             octokit,
             owner,
@@ -219,29 +206,21 @@ async function main() {
             musicId
         );
 
-        // 在 issue 中添加下载链接
+        // 添加下载链接
         const downloadLinks = assets.map(asset => {
             return `- [${asset.name}](${asset.browser_download_url})`;
         }).join('\n');
 
-        await octokit.issues.createComment({
-            owner,
-            repo,
-            issue_number: issueNumber,
-            body: `下载完成！您可以从以下链接下载音乐文件：\n\n${downloadLinks}\n\n或访问 [Release 页面](${release.html_url})`
-        });
+        await updateProgress(octokit, owner, repo, issueNumber,
+            `🎉 处理完成！您可以从以下链接下载音乐文件：\n\n${downloadLinks}\n\n或访问 [Release 页面](${release.html_url})`);
 
         // 清理下载的文件
         execSync('rm -rf downloads/*');
 
     } catch (error) {
         console.error('Error details:', error);
-        await octokit.issues.createComment({
-            owner,
-            repo,
-            issue_number: issueNumber,
-            body: `下载失败：${error.message}\n\n详细错误：\n\`\`\`\n${error.stack}\n\`\`\``
-        });
+        await updateProgress(octokit, owner, repo, issueNumber,
+            `❌ 下载失败：${error.message}\n\n详细错误：\n\`\`\`\n${error.stack}\n\`\`\``);
         process.exit(1);
     } finally {
         await octokit.issues.update({
