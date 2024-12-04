@@ -253,7 +253,7 @@ async function main() {
         }).join('\n');
 
         await updateProgress(octokit, owner, repo, issueNumber,
-            `🎉 处理完成！您可以从以下链接下载音乐文件：\n\n${downloadLinks}\n\n或访问 [Release 页面](${release.html_url})`);
+            `🎉 处理完成！您可以从以下链接下载音乐文件：\n\n${downloadLinks}\n\n或访问 [Release 页面](${release.html_url})\n\n⚠️ 注意：下载链接将在 3 小时后失效，请尽快下载！\nNote: Download links will expire in 3 hours, please download as soon as possible!`);
 
         // 清理下载的文件
         execSync('rm -rf downloads/*');
