@@ -120,10 +120,6 @@ async function main() {
     const issueNumber = event.issue.number;
 
     try {
-        // 开始处理的提示
-        await updateProgress(octokit, owner, repo, issueNumber,
-            '🚀 开始处理您的下载请求...');
-
         // 解析 issue body
         const body = event.issue.body;
         const typeMatch = body.match(/### 下载类型\s*\n\n(.+?)(?=\n|$)/);
@@ -144,23 +140,6 @@ async function main() {
             return;
         }
 
-        await updateProgress(octokit, owner, repo, issueNumber,
-            `⚙️ 正在准备下载${type === 'song' ? '单曲' : '专辑'} (ID: ${musicId})...`);
-
-        // 确保下载目录存在
-        if (!fs.existsSync('downloads')) {
-            fs.mkdirSync('downloads', { recursive: true });
-        }
-
-        // 构建项目
-        await updateProgress(octokit, owner, repo, issueNumber,
-            '🔨 正在构建项目...');
-        execSync('npm run build', { stdio: 'inherit' });
-
-        // 执行下载
-        await updateProgress(octokit, owner, repo, issueNumber,
-            `📥 开始下载${type === 'song' ? '单曲' : '专辑'}...`);
-
         if (type === 'song') {
             try {
                 const output = execSync(`node dist/index.js download ${musicId}`, {
@@ -173,8 +152,6 @@ async function main() {
                     await updateProgress(octokit, owner, repo, issueNumber,
                         `ℹ️ 获取到歌曲信息: ${songNameMatch[1].trim()}`);
                 }
-
-                // ... 其他单曲处理逻辑 ...
             } catch (error) {
                 throw error;
             }
@@ -187,12 +164,9 @@ async function main() {
         // 检查下载结果
         const downloadedFiles = glob.sync('downloads/**/*.mp3');
         await updateProgress(octokit, owner, repo, issueNumber,
-            `✅ 下载完成，共 ${downloadedFiles.length} 个文件`);
+            `✅ 下载完成，共 ${downloadedFiles.length} 个文件，正在打包并上传到 Release...`);
 
         // 创建 release
-        await updateProgress(octokit, owner, repo, issueNumber,
-            '📦 正在打包并上传到 Release...');
-
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const tag = `download-${issueNumber}-${timestamp}`;
 
@@ -220,7 +194,7 @@ async function main() {
     } catch (error) {
         console.error('Error details:', error);
         await updateProgress(octokit, owner, repo, issueNumber,
-            `❌ 下载失败：${error.message}\n\n详细错误：\n\`\`\`\n${error.stack}\n\`\`\``);
+            `❌ 下载失败：${error.message}`);
         process.exit(1);
     } finally {
         await octokit.issues.update({
