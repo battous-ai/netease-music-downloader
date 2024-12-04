@@ -1,5 +1,7 @@
 # NetEase Music Downloader
 
+**Most of the code in this repository was written and developed by AI.**
+
 [中文文档](./readmeZh.md)
 
 A simple and easy-to-use tool for downloading music from NetEase Cloud Music. Supporting both single songs and albums with multiple ways to use.
