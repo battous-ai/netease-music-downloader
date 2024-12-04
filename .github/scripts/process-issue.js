@@ -149,22 +149,35 @@ async function main() {
 
                 const songNameMatch = output.match(/歌曲信息:\s*(.+?)(?:\n|$)/);
                 if (songNameMatch) {
+                    songInfo = songNameMatch[1].trim();
                     await updateProgress(octokit, owner, repo, issueNumber,
-                        `ℹ️ 获取到歌曲信息: ${songNameMatch[1].trim()}`);
+                        `ℹ️ 获取到歌曲信息: ${songInfo}`);
                 }
             } catch (error) {
                 throw error;
             }
         } else {
-            execSync(`node dist/index.js album ${musicId}`, {
-                stdio: 'inherit'
+            const output = execSync(`node dist/index.js album ${musicId}`, {
+                stdio: 'pipe',
+                encoding: 'utf8'
             });
+
+            // 从输出中解析专辑信息
+            const albumInfoMatch = output.match(/专辑信息:\s*(.+?)(?:\n|$)/);
+            if (albumInfoMatch) {
+                albumInfo = albumInfoMatch[1].trim();
+                await updateProgress(octokit, owner, repo, issueNumber,
+                    `ℹ️ 获取到专辑信息: ${albumInfo}`);
+            }
         }
 
         // 检查下载结果
         const downloadedFiles = glob.sync('downloads/**/*.mp3');
         await updateProgress(octokit, owner, repo, issueNumber,
-            `✅ 下载完成，共 ${downloadedFiles.length} 个文件，正在打包并上传到 Release...`);
+            `✅ 下载完成，共 ${downloadedFiles.length} 个文件\n` +
+            `📦 ${type === 'song' ? `歌曲：${songInfo}` : `专辑：${albumInfo}`}\n` +
+            `⏳ 正在打包并上传到 Release...`
+        );
 
         // 创建 release
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
