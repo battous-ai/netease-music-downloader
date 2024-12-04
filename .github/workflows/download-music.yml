@@ -30,16 +30,11 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
       - name: Install dependencies
-        run: pnpm install
+        run: npm ci
 
       - name: Build project
-        run: pnpm run build
+        run: npm run build
 
       - name: Parse issue and download music
         env:
