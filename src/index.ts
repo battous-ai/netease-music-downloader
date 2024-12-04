@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { program } from 'commander';
 import { downloadSong } from './commands/download';
 import { downloadAlbum } from './commands/album';
