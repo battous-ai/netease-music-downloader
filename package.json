@@ -6,6 +6,21 @@
   "bin": {
     "netease-dl": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "netease",
+    "music",
+    "downloader",
+    "cli"
+  ],
+  "author": "Gaohaoyang",
+  "license": "MIT",
   "scripts": {
     "start": "ts-node src/index.ts",
     "build": "tsc",
