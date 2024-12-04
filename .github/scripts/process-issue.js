@@ -114,9 +114,31 @@ async function main() {
         auth: process.env.GITHUB_TOKEN
     });
 
+    // 添加环境变量检查和本地开发支持
+    if (!process.env.GITHUB_REPOSITORY) {
+        console.error('Error: This script is meant to be run in GitHub Actions environment');
+        console.log('For local development, you can use:');
+        console.log('  npm start download <musicId>');
+        console.log('  npm start album <albumId>');
+        process.exit(1);
+    }
+
     const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
+
+    // 添加事件路径检查
+    if (!process.env.GITHUB_EVENT_PATH) {
+        console.error('Error: GITHUB_EVENT_PATH is not defined');
+        process.exit(1);
+    }
+
     const eventPath = process.env.GITHUB_EVENT_PATH;
     const event = require(eventPath);
+
+    if (!event || !event.issue) {
+        console.error('Error: Invalid event data');
+        process.exit(1);
+    }
+
     const issueNumber = event.issue.number;
 
     try {
