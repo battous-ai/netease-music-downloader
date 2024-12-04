@@ -3,12 +3,14 @@ name: Download Music
 on:
   issues:
     types: [opened]
+  schedule:
+    - cron: '0 */3 * * *'  # 每3小时运行一次
 
 jobs:
   download:
     runs-on: ubuntu-latest
     permissions:
-      contents: write      # 用于创建 releases
+      contents: write      # 用于创建和删除 releases
       issues: write       # 用于更新 issues
 
     steps:
@@ -25,7 +27,12 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Parse issue and download music
+      - name: Process task
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node .github/scripts/process-issue.js
+        run: |
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            node .github/scripts/cleanup-releases.js
+          else
+            node .github/scripts/process-issue.js
+          fi
