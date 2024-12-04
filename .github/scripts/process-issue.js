@@ -142,10 +142,22 @@ async function main() {
 
         if (type === 'song') {
             try {
+                // 执行下载并捕获输出
                 const output = execSync(`node dist/index.js download ${musicId}`, {
                     stdio: 'pipe',
                     encoding: 'utf8'
                 });
+
+                // 检查输出中是否包含无版权或下架的提示
+                if (output.includes('无版权') || output.includes('已下架')) {
+                    await octokit.issues.createComment({
+                        owner,
+                        repo,
+                        issue_number: issueNumber,
+                        body: `❌ 抱歉，该音乐暂时无法下载：可能是因为版权限制或已下架。\n\n建议您：\n1. 确认该音乐在网易云音乐是否可以正常播放\n2. 尝试下载其他音乐`
+                    });
+                    return;
+                }
 
                 const songNameMatch = output.match(/歌曲信息:\s*(.+?)(?:\n|$)/);
                 if (songNameMatch) {
@@ -206,8 +218,17 @@ async function main() {
 
     } catch (error) {
         console.error('Error details:', error);
-        await updateProgress(octokit, owner, repo, issueNumber,
-            `❌ 下载失败：${error.message}`);
+        // 根据错误类型返回不同的提示
+        let errorMessage = error.message;
+        if (error.message.includes('无版权') || error.message.includes('已下架')) {
+            errorMessage = '该音乐暂时无法下载：可能是因为版权限制或已下架。建议确认该音乐在网易云音乐是否可以正常播放。';
+        }
+        await octokit.issues.createComment({
+            owner,
+            repo,
+            issue_number: issueNumber,
+            body: `❌ ${errorMessage}`
+        });
         process.exit(1);
     } finally {
         await octokit.issues.update({
