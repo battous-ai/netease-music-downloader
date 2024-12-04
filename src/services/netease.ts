@@ -13,7 +13,7 @@ export async function getSongInfo(id: string): Promise<Song> {
   try {
     const response = await axios.get(songUrl, { headers });
     const song = response.data?.songs?.[0];
-    if (!song) throw new Error('获取歌曲信息失败');
+    if (!song) throw new Error('获取歌曲信息失败 Failed to get song info');
     return song;
   } catch (error) {
     return { id, name: id };

@@ -6,11 +6,11 @@ import * as fs from 'fs';
 
 export async function downloadAlbum(albumId: string): Promise<void> {
   try {
-    // 从URL中提取ID
+    // 从URL中提取ID Extract ID from URL
     if (albumId.includes('music.163.com')) {
       const match = albumId.match(/id=(\d+)/);
       if (!match) {
-        console.error('无效的专辑URL');
+        console.error('无效的专辑URL Invalid album URL');
         process.exit(1);
       }
       albumId = match[1];
@@ -18,8 +18,8 @@ export async function downloadAlbum(albumId: string): Promise<void> {
 
     const { songs, albumName, artistName } = await getAlbumInfo(albumId);
 
-    console.log(`\n专辑信息: ${albumName} - ${artistName}`);
-    console.log(`共 ${songs.length} 首歌曲\n`);
+    console.log(`\n专辑信息 Album info: ${albumName} - ${artistName}`);
+    console.log(`共 Total: ${songs.length} 首歌曲 songs\n`);
 
     const sanitizedAlbumName = sanitizeFileName(albumName);
     const sanitizedArtistName = sanitizeFileName(artistName);
@@ -32,12 +32,12 @@ export async function downloadAlbum(albumId: string): Promise<void> {
       const song = songs[i];
       try {
         const songName = song.name;
-        const artistName = song.artists?.[0]?.name || '未知歌手';
+        const artistName = song.artists?.[0]?.name || '未知歌手 Unknown Artist';
         const displayName = `${artistName}-${songName}`;
 
         const availability = await checkSongAvailability(song.id);
         if (!availability.available || !availability.url) {
-          console.log(`\n[${i + 1}/${songs.length}] ${displayName} (歌曲已下架或无版权，跳过下载)`);
+          console.log(`\n[${i + 1}/${songs.length}] ${displayName} (歌曲已下架或无版权，跳过下载 Song is unavailable or no copyright, skipping download)`);
           i++;
           continue;
         }
@@ -48,12 +48,12 @@ export async function downloadAlbum(albumId: string): Promise<void> {
         const filePath = getDownloadPath('album', fileName, albumDirName);
 
         if (fs.existsSync(filePath)) {
-          console.log(`\n[${i + 1}/${songs.length}] ${fileName} (文件已存在，跳过下载)`);
+          console.log(`\n[${i + 1}/${songs.length}] ${fileName} (文件已存在，跳过下载 File exists, skipping download)`);
           i++;
           continue;
         }
 
-        console.log(`\n[${i + 1}/${songs.length}] 开始下载: ${displayName}`);
+        console.log(`\n[${i + 1}/${songs.length}] 开始下载 Start downloading: ${displayName}`);
 
         const response = await axios({
           method: 'get',
@@ -85,9 +85,9 @@ export async function downloadAlbum(albumId: string): Promise<void> {
         i++;
       } catch (error) {
         const err = error as Error;
-        console.error(`\n[${i + 1}/${songs.length}] ${song.name} - 下载失败: ${err.message}`);
+        console.error(`\n[${i + 1}/${songs.length}] ${song.name} - 下载失败 Download failed: ${err.message}`);
         if (err.message.includes('socket') || err.message.includes('network')) {
-          console.log('等待 3 秒后重试...');
+          console.log('等待 3 秒后重试... Retrying in 3 seconds...');
           await new Promise(resolve => setTimeout(resolve, 3000));
           continue;
         }
@@ -96,10 +96,10 @@ export async function downloadAlbum(albumId: string): Promise<void> {
     }
 
     multibar.stop();
-    console.log('\n专辑下载完成！');
+    console.log('\n专辑下载完成！Album download completed!');
   } catch (error) {
     const err = error as Error;
-    console.error('下载失败:', err.message);
+    console.error('下载失败 Download failed:', err.message);
     process.exit(1);
   }
 }

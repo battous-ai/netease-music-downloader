@@ -162,7 +162,7 @@ async function main() {
 
         if (!typeMatch || !idMatch) {
             await updateProgress(octokit, owner, repo, issueNumber,
-                "❌ 无法解析请求内容，请使用正确的issue模板");
+                "❌ 无法解析请求内容，请使用正确的issue模板\nUnable to parse request content, please use the correct issue template");
             return;
         }
 
@@ -175,7 +175,7 @@ async function main() {
 
         if (!musicId || !/^\d+$/.test(musicId)) {
             await updateProgress(octokit, owner, repo, issueNumber,
-                "❌ 无效的音乐ID，请提供正确的数字ID");
+                "❌ 无效的音乐ID，请提供正确的数字ID\nInvalid music ID, please provide a correct numeric ID");
             return;
         }
 
@@ -194,7 +194,7 @@ async function main() {
                         owner,
                         repo,
                         issue_number: issueNumber,
-                        body: `❌ 抱歉，该音乐暂时无法下载：可能是因为版权限制或已下架。\n\n建议您：\n1. 确认该音乐在网易云音乐是否可以正常播放\n2. 尝试下载其他音乐`
+                        body: `❌ 抱歉，该音乐暂时无法下载：可能是因为版权限制或已下架。\nSorry, this music is temporarily unavailable: it may be due to copyright restrictions or has been removed.\n\n建议您 Suggestions:\n1. 确认该音乐在网易云音乐是否可以正常播放\n   Check if the music can be played normally on NetEase Cloud Music\n2. 尝试下载其他音乐\n   Try downloading other music`
                     });
                     return;
                 }
@@ -203,7 +203,7 @@ async function main() {
                 if (songNameMatch) {
                     songInfo = songNameMatch[1].trim();
                     await updateProgress(octokit, owner, repo, issueNumber,
-                        `ℹ️ 获取到歌曲信息: ${songInfo}`);
+                        `ℹ️ 获取到歌曲信息 Song info: ${songInfo}`);
                 }
             } catch (error) {
                 console.error('Error during song download:', error);
@@ -221,16 +221,16 @@ async function main() {
             if (albumInfoMatch) {
                 albumInfo = albumInfoMatch[1].trim();
                 await updateProgress(octokit, owner, repo, issueNumber,
-                    `ℹ️ 获取到专辑信息: ${albumInfo}`);
+                    `ℹ️ 获取到专辑信息 Album info: ${albumInfo}`);
             }
         }
 
         // 检查下载结果
         const downloadedFiles = glob.sync('downloads/**/*.mp3');
         await updateProgress(octokit, owner, repo, issueNumber,
-            `✅ 下载完成，共 ${downloadedFiles.length} 个文件\n` +
-            `📦 ${type === 'song' ? `歌曲：${songInfo}` : `专辑：${albumInfo}`}\n` +
-            `⏳ 正在打包并上传到 Release...`
+            `✅ 下载完成 Download completed，共 Total: ${downloadedFiles.length} 个文件 files\n` +
+            `📦 ${type === 'song' ? `歌曲 Song：${songInfo}` : `专辑 Album：${albumInfo}`}\n` +
+            `⏳ 正在打包并上传到 Release Packaging and uploading to Release...`
         );
 
         // 创建 release
@@ -253,7 +253,7 @@ async function main() {
         }).join('\n');
 
         await updateProgress(octokit, owner, repo, issueNumber,
-            `🎉 处理完成！您可以从以下链接下载音乐文件：\n\n${downloadLinks}\n\n或访问 [Release 页面](${release.html_url})\n\n⚠️ 注意：下载链接将在 3 小时后失效，请尽快下载！\nNote: Download links will expire in 3 hours, please download as soon as possible!`);
+            `🎉 处理完成！您可以从以下链接下载音乐文件：\nProcessing completed! You can download the music files from the following links:\n\n${downloadLinks}\n\n或访问 Or visit [Release 页面 page](${release.html_url})\n\n⚠️ 注意：下载链接将在 3 小时后失效，请尽快下载！\nNote: Download links will expire in 3 hours, please download as soon as possible!`);
 
         // 清理下载的文件
         execSync('rm -rf downloads/*');
@@ -263,7 +263,7 @@ async function main() {
         // 根据错误类型返回不同的提示
         let errorMessage = error.message;
         if (error.message.includes('无版权') || error.message.includes('已下架')) {
-            errorMessage = '该音乐暂时无法下载：可能是因为版权限制或已下架。建议确认该音乐在网易云音乐是否可以正常播放。';
+            errorMessage = '该音乐暂时无法下载：可能是因为版权限制或已下架。建议确认该音乐在网易云音乐是否可以正常播放。\nThis music is temporarily unavailable: it may be due to copyright restrictions or has been removed. Please check if the music can be played normally on NetEase Cloud Music.';
         }
         await octokit.issues.createComment({
             owner,

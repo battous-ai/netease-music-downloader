@@ -9,13 +9,13 @@ export async function downloadSong(id: string, progressBar?: SingleBar): Promise
   try {
     const song = await getSongInfo(id);
     const songName = song.name;
-    const artistName = song.artists?.[0]?.name || '未知歌手';
+    const artistName = song.artists?.[0]?.name || '未知歌手 Unknown Artist';
 
-    console.log(`\n歌曲信息: ${artistName}-${songName}`);
+    console.log(`\n歌曲信息 Song info: ${artistName}-${songName}`);
 
     const availability = await checkSongAvailability(id);
     if (!availability.available || !availability.url) {
-      console.log(`歌曲已下架或无版权，跳过下载`);
+      console.log(`歌曲已下架或无版权，跳过下载\nSong is unavailable or no copyright, skipping download`);
       return;
     }
 
@@ -25,11 +25,11 @@ export async function downloadSong(id: string, progressBar?: SingleBar): Promise
     const filePath = getDownloadPath('single', fileName);
 
     if (fs.existsSync(filePath)) {
-      console.log(`文件已存在，跳过下载: ${fileName}`);
+      console.log(`文件已存在，跳过下载 File exists, skipping download: ${fileName}`);
       return;
     }
 
-    console.log(`开始下载: ${artistName}-${songName}`);
+    console.log(`开始下载 Start downloading: ${artistName}-${songName}`);
 
     const response = await axios({
       method: 'get',
@@ -57,9 +57,9 @@ export async function downloadSong(id: string, progressBar?: SingleBar): Promise
     });
 
     bar.stop();
-    console.log(`\n下载完成: ${fileName}`);
+    console.log(`\n下载完成 Download completed: ${fileName}`);
   } catch (error) {
     const err = error as Error;
-    console.error(`下载失败 (ID: ${id}):`, err.message);
+    console.error(`下载失败 Download failed (ID: ${id}):`, err.message);
   }
 }
