@@ -201,24 +201,27 @@ async function getSongUrl(id: string, level: string): Promise<string | null> {
     if (response.data?.code !== 200) {
       console.error(`API 返回错误 API returned error for ${level}:`, {
         code: response.data?.code,
-        message: response.data?.message
+        message: response.data?.message,
+        data: response.data
       });
       return null;
     }
 
     const songData = response.data?.data?.[0];
     if (!songData?.url) {
-      console.log(`未获取到 ${level} 音质的 URL No URL found for ${level} quality`);
+      console.log(`未获到 ${level} 音质的 URL No URL found for ${level} quality`);
       return null;
     }
 
-    console.log(`获取到音质 Quality: ${level}, 比特率 Bitrate: ${Math.floor(songData.br / 1000)}kbps, 格式 Format: ${songData.type}`);
+    console.log(`获取到音质 Quality: ${level}, 比特率 Bitrate: ${Math.floor(songData.br / 1000)}kbps, 格式 Format: ${songData.type}, URL: ${songData.url}`);
     return songData.url;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error(`尝试获取 ${level} 音质失败 Failed to get ${level} quality:`, {
         message: error.message,
-        status: error.response?.status
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers
       });
     } else {
       console.error(`尝试获取 ${level} 音质失败 Failed to get ${level} quality:`, error instanceof Error ? error.message : 'Unknown error');
