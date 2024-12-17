@@ -132,28 +132,33 @@ export async function downloadAlbum(albumId: string, issueNumber?: number): Prom
     }
 
   } catch (error) {
-    if (issueNumber) {
-      // 如果是通过 GitHub Issue 触发的下载，返回错误信息并关闭 issue
-      const octokit = new Octokit({
-        auth: process.env.GITHUB_TOKEN,
-      });
+    if (issueNumber && !isNaN(Number(issueNumber))) {
+      try {
+        // 如果是通过 GitHub Issue 触发的下载，返回错误信息并关闭 issue
+        const octokit = new Octokit({
+          auth: process.env.GITHUB_TOKEN,
+        });
 
-      await octokit.issues.createComment({
-        owner: 'Gaohaoyang',
-        repo: 'netease-music-downloader',
-        issue_number: issueNumber,
-        body: '❌ 专辑下载失败，可能是因为版权限制或资源不可用。'
-      });
+        await octokit.issues.createComment({
+          owner: 'Gaohaoyang',
+          repo: 'netease-music-downloader',
+          issue_number: Number(issueNumber),
+          body: '❌ 专辑下载失败，可能是因为版权限制或资源不可用。'
+        });
 
-      // 关闭 issue
-      await octokit.issues.update({
-        owner: 'Gaohaoyang',
-        repo: 'netease-music-downloader',
-        issue_number: issueNumber,
-        state: 'closed'
-      });
+        // 关闭 issue
+        await octokit.issues.update({
+          owner: 'Gaohaoyang',
+          repo: 'netease-music-downloader',
+          issue_number: Number(issueNumber),
+          state: 'closed'
+        });
+      } catch (apiError) {
+        // 如果 GitHub API 调用失败，记录错误但不中断程序
+        console.error('GitHub API 调用失败:', apiError);
+      }
     } else {
-      // 如果是通过命令行触发的下载，直接打印错误信息
+      // 如果是通过命令行触发的下载，或者 issueNumber 无效，直接打印错误信息
       console.error('专辑下载失败，可能是因为版权限制或资源不可用。');
     }
 
