@@ -18,7 +18,7 @@
 
 ### 1. 通过 GitHub Issue 下载（推荐）
 
-最简单的使用方式，无需安装任何工具：
+最简单的使用方式，无需安装任何工具（由于github action服务器在海外，所以部分歌曲可能无法下载）：
 
 1. 访问 [Issues 页面](https://github.com/Gaohaoyang/netease-music-downloader/issues)
 2. 点击 "New Issue"

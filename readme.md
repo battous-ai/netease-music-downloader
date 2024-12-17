@@ -20,7 +20,7 @@ A simple and easy-to-use tool for downloading music from NetEase Cloud Music. Su
 
 ### 1. Download via GitHub Issue (Recommended)
 
-The easiest way to use, no installation required:
+The easiest way to use, no installation required (due to the server being located overseas, some songs may not be downloaded):
 
 1. Visit [Issues page](https://github.com/Gaohaoyang/netease-music-downloader/issues)
 2. Click "New Issue"
