@@ -114,6 +114,36 @@ export async function downloadAlbum(albumId: string, issueNumber?: number): Prom
         auth: process.env.GITHUB_TOKEN,
       });
 
+      // 如果没有成功下载任何歌曲
+      if (downloadResults.success.length === 0) {
+        const errorMessage = `❌ 专辑《${albumName}》下载失败\n\n` +
+          `可能原因：所有歌曲都没有版权或已下架\n\n` +
+          `总计歌曲数：${songs.length}\n` +
+          `⚠️ 无版权或已下架：${downloadResults.skipped.length} 首\n\n` +
+          (downloadResults.skipped.length > 0 ? `### 无版权或已下架的歌曲：\n${downloadResults.skipped.map(s => `- ${s}`).join('\n')}` : '');
+
+        try {
+          await octokit.issues.createComment({
+            owner: 'Gaohaoyang',
+            repo: 'netease-music-downloader',
+            issue_number: Number(issueNumber),
+            body: errorMessage
+          });
+
+          // 关闭 issue
+          await octokit.issues.update({
+            owner: 'Gaohaoyang',
+            repo: 'netease-music-downloader',
+            issue_number: Number(issueNumber),
+            state: 'closed'
+          });
+          return;  // 直接返回，不进行打包上传
+        } catch (apiError) {
+          console.error('GitHub API 调用失败:', apiError);
+          return;
+        }
+      }
+
       const summaryMessage = `## 专辑《${albumName}》下载报告\n\n` +
         `总计歌曲数：${songs.length}\n\n` +
         `✅ 下载成功：${downloadResults.success.length} 首\n` +
