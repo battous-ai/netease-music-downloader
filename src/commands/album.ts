@@ -109,7 +109,7 @@ export async function downloadAlbum(albumId: string, issueNumber?: number): Prom
     console.log('\n专辑下载完成！Album download completed!');
 
     // 如果是通过 GitHub Issue 触发的下载，发送下载报告
-    if (issueNumber) {
+    if (issueNumber && !isNaN(Number(issueNumber))) {
       const octokit = new Octokit({
         auth: process.env.GITHUB_TOKEN,
       });
@@ -123,22 +123,35 @@ export async function downloadAlbum(albumId: string, issueNumber?: number): Prom
         (downloadResults.failed.length > 0 ? `### 下载失败的歌曲：\n${downloadResults.failed.map(s => `- ${s}`).join('\n')}\n\n` : '') +
         (downloadResults.skipped.length > 0 ? `### 无版权或已下架的歌曲：\n${downloadResults.skipped.map(s => `- ${s}`).join('\n')}` : '');
 
-      await octokit.issues.createComment({
-        owner: 'Gaohaoyang',
-        repo: 'netease-music-downloader',
-        issue_number: issueNumber,
-        body: summaryMessage
-      });
+      try {
+        // 发送下载报告
+        await octokit.issues.createComment({
+          owner: 'Gaohaoyang',
+          repo: 'netease-music-downloader',
+          issue_number: Number(issueNumber),
+          body: summaryMessage
+        });
+
+        // 关闭 issue
+        await octokit.issues.update({
+          owner: 'Gaohaoyang',
+          repo: 'netease-music-downloader',
+          issue_number: Number(issueNumber),
+          state: 'closed'
+        });
+      } catch (apiError) {
+        console.error('GitHub API 调用失败:', apiError);
+      }
     }
 
   } catch (error) {
     if (issueNumber && !isNaN(Number(issueNumber))) {
       try {
-        // 如果是通过 GitHub Issue 触发的下载，返回错误信息并关闭 issue
         const octokit = new Octokit({
           auth: process.env.GITHUB_TOKEN,
         });
 
+        // 只发送简单的错误消息
         await octokit.issues.createComment({
           owner: 'Gaohaoyang',
           repo: 'netease-music-downloader',
@@ -154,12 +167,15 @@ export async function downloadAlbum(albumId: string, issueNumber?: number): Prom
           state: 'closed'
         });
       } catch (apiError) {
-        // 如果 GitHub API 调用失败，记录错误但不中断程序
+        // 只在控制台记录 API 错误，不要让它显示在 issue 中
         console.error('GitHub API 调用失败:', apiError);
       }
-    } else {
-      // 如果是通过命令行触发的下载，或者 issueNumber 无效，直接打印错误信息
-      console.error('专辑下载失败，可能是因为版权限制或资源不可用。');
+    }
+
+    // 在控制台显示详细错误，但不要让它显示在 issue 中
+    console.error('专辑下载失败，可能是因为版权限制或资源不可用。');
+    if (error instanceof Error) {
+      console.error('详细错误:', error.message);
     }
 
     process.exit(1);
