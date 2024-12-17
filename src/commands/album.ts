@@ -132,20 +132,8 @@ export async function downloadAlbum(albumId: string, issueNumber?: number): Prom
     }
 
   } catch (error) {
-    const errorMessage = '专辑下载失败，可能是因为版权限制或资源不可用。';
-    let errorDetail = '未知错误';
-
-    // 检查 error 是否是 Error 类型
-    if (error instanceof Error) {
-      errorDetail = error.message;
-    } else if (typeof error === 'string') {
-      errorDetail = error;
-    } else if (error && typeof error === 'object' && 'message' in error) {
-      errorDetail = error.message as string;
-    }
-
     if (issueNumber) {
-      // 如果是通过 GitHub Issue 触发的下载，返回错误信息
+      // 如果是通过 GitHub Issue 触发的下载，返回错误信息并关闭 issue
       const octokit = new Octokit({
         auth: process.env.GITHUB_TOKEN,
       });
@@ -154,12 +142,19 @@ export async function downloadAlbum(albumId: string, issueNumber?: number): Prom
         owner: 'Gaohaoyang',
         repo: 'netease-music-downloader',
         issue_number: issueNumber,
-        body: `❌ ${errorMessage}\n\n详细错误：${errorDetail}`
+        body: '❌ 专辑下载失败，可能是因为版权限制或资源不可用。'
+      });
+
+      // 关闭 issue
+      await octokit.issues.update({
+        owner: 'Gaohaoyang',
+        repo: 'netease-music-downloader',
+        issue_number: issueNumber,
+        state: 'closed'
       });
     } else {
       // 如果是通过命令行触发的下载，直接打印错误信息
-      console.error(errorMessage);
-      console.error('详细错误：', errorDetail);
+      console.error('专辑下载失败，可能是因为版权限制或资源不可用。');
     }
 
     process.exit(1);
