@@ -4,10 +4,18 @@ export interface Song {
   artists?: Array<{
     name: string;
   }>;
+  album?: {
+    name: string;
+    picUrl?: string;
+  };
+  duration?: number;
+  publishTime?: number;
 }
 
 export interface AlbumInfo {
   songs: Song[];
   albumName: string;
   artistName: string;
+  picUrl?: string;
+  publishTime?: number;
 }

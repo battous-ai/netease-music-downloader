@@ -90,14 +90,21 @@ export async function getSongInfo(id: string): Promise<Song> {
     return {
       id: song.id.toString(),
       name: `${song.name}${song.alia?.length ? ` (${song.alia[0]})` : ''}`,
-      artists
+      artists,
+      album: {
+        name: song.al?.name || '',
+        picUrl: song.al?.picUrl
+      },
+      duration: song.dt, // duration in milliseconds
+      publishTime: song.publishTime
     };
   } catch (error) {
     console.error('获取歌曲信息失败 Failed to get song info:', error instanceof Error ? error.message : 'Unknown error');
     return {
       id,
       name: id,
-      artists: [{ name: '未知歌手 Unknown Artist' }]
+      artists: [{ name: '未知歌手 Unknown Artist' }],
+      album: { name: '' }
     };
   }
 }
@@ -146,7 +153,13 @@ export async function getAlbumInfo(albumId: string): Promise<AlbumInfo> {
       return {
         id: song.id.toString(),
         name: `${song.name}${song.alia?.length ? ` (${song.alia[0]})` : ''}`,
-        artists
+        artists,
+        album: {
+          name: album.name || '',
+          picUrl: album.picUrl
+        },
+        duration: song.dt,
+        publishTime: song.publishTime
       };
     });
 
@@ -156,7 +169,9 @@ export async function getAlbumInfo(albumId: string): Promise<AlbumInfo> {
     return {
       songs: songList,
       albumName: album.name || '',
-      artistName: albumArtistName
+      artistName: albumArtistName,
+      picUrl: album.picUrl,
+      publishTime: album.publishTime
     };
   } catch (error) {
     console.error('获取专辑信息失败 Failed to get album info:', error instanceof Error ? error.message : 'Unknown error');
