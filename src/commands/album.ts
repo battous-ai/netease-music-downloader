@@ -4,6 +4,21 @@ import { sanitizeFileName, getDownloadPath } from '../utils/file';
 import axios from 'axios';
 import * as fs from 'fs';
 import { Octokit } from '@octokit/rest';
+import NodeID3 from 'node-id3';
+
+async function downloadImage(url: string): Promise<Buffer | null> {
+  try {
+    const response = await axios({
+      method: 'get',
+      url,
+      responseType: 'arraybuffer'
+    });
+    return Buffer.from(response.data);
+  } catch (error) {
+    console.error('下载封面图片失败 Failed to download cover image:', error instanceof Error ? error.message : 'Unknown error');
+    return null;
+  }
+}
 
 export async function downloadAlbum(albumId: string, issueNumber?: number): Promise<void> {
   try {
@@ -98,6 +113,38 @@ export async function downloadAlbum(albumId: string, issueNumber?: number): Prom
         });
 
         progressBar.update(Math.round(totalLength/1024));
+
+        // 写入元数据
+        console.log(`[${i + 1}/${songs.length}] 正在写入音乐标签 Writing music tags...`);
+        const tags: NodeID3.Tags = {
+          title: song.name,
+          artist: song.artists?.map(a => a.name).join(', '),
+          album: albumName,
+          year: song.publishTime ? new Date(song.publishTime).getFullYear().toString() : undefined,
+          trackNumber: `${i + 1}/${songs.length}`,
+          performerInfo: song.artists?.map(a => a.name).join(', '),
+          length: song.duration?.toString(),
+        };
+
+        // 下载并添加封面
+        if (song.album?.picUrl) {
+          const imageBuffer = await downloadImage(song.album.picUrl);
+          if (imageBuffer) {
+            tags.image = {
+              mime: 'image/jpeg',
+              type: {
+                id: 3,
+                name: 'front cover'
+              },
+              description: 'Album cover',
+              imageBuffer
+            };
+          }
+        }
+
+        NodeID3.write(tags, filePath);
+        console.log(`[${i + 1}/${songs.length}] 音乐标签写入完成 Music tags written successfully`);
+
         downloadResults.success.push(displayName);
         i++;
       } catch (error) {
