@@ -15,6 +15,7 @@ A simple and easy-to-use tool for downloading music from NetEase Cloud Music. Su
 - 📂 Auto-create album directories
 - ⚡️ Auto-skip downloaded files
 - 🔍 Auto-detect unavailable or copyright-protected songs
+- 📝 Auto-download lyrics (if available)
 
 ## Usage
 
@@ -73,9 +74,12 @@ pnpm start album 34836039     # Download an album
 ```
 downloads/
 ├── artist-songname.mp3              # Single song
+├── artist-songname.lrc             # Lyrics file
 └── album-name/                      # Album
     ├── 01.artist-song1.mp3
+    ├── 01.artist-song1.lrc
     ├── 02.artist-song2.mp3
+    ├── 02.artist-song2.lrc
     └── ...
 ```
 
