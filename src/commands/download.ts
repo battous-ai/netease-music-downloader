@@ -82,7 +82,6 @@ export async function downloadSong(id: string, progressBar?: SingleBar): Promise
       album: song.album?.name,
       year: song.publishTime ? new Date(song.publishTime).getFullYear().toString() : undefined,
       trackNumber: undefined,
-      genre: '网易云音乐',
       performerInfo: song.artists?.map(a => a.name).join(', '),
       length: song.duration?.toString(),
     };
