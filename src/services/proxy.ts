@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { setProxy } from './netease';
+import { getSongInfo } from './netease';
 
 interface Proxy {
   host: string;
@@ -14,35 +15,53 @@ class ProxyManager {
   private proxyList: Proxy[] = [];
   private lastUpdate: Date | null = null;
   private readonly UPDATE_INTERVAL = 10 * 60 * 1000; // 10 minutes
-  private readonly TIMEOUT = 3000; // 减少到3秒
-  private readonly MAX_PARALLEL_TESTS = 5; // 最多同时测试5个代理
+  private readonly TIMEOUT = 3000; // 3 seconds timeout
+  private readonly MAX_PARALLEL_TESTS = 5; // test 5 proxies at once
+  private readonly TEST_SONG_ID = '1956534932'; // 用于测试的歌曲ID（热门歌曲）
   private readonly PROXY_SOURCES = [
-    'https://www.proxy-list.download/api/v1/get?type=http&country=CN',
-    'https://proxylist.geonode.com/api/proxy-list?filterUpTime=90&country=CN&protocols=http%2Chttps&limit=100',
+    {
+      url: 'https://www.proxy-list.download/api/v1/get?type=http&country=CN',
+      type: 'proxy-list.download'
+    },
+    {
+      url: 'https://proxylist.geonode.com/api/proxy-list?filterUpTime=90&country=CN&protocols=http%2Chttps&limit=100',
+      type: 'geonode'
+    },
+    {
+      url: 'https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&country=CN&ssl=all&anonymity=all',
+      type: 'proxyscrape'
+    },
+    {
+      url: 'https://openproxylist.xyz/china.txt',
+      type: 'openproxylist'
+    },
+    {
+      url: 'https://raw.githubusercontent.com/fate0/proxylist/master/proxy.list',
+      type: 'fate0'
+    },
+    {
+      url: 'https://raw.githubusercontent.com/sunny9577/proxy-scraper/master/proxies.json',
+      type: 'sunny9577'
+    }
   ];
 
   async getWorkingProxy(): Promise<Proxy | null> {
-    // Update proxy list if it's too old
     if (!this.lastUpdate || Date.now() - this.lastUpdate.getTime() > this.UPDATE_INTERVAL) {
       await this.updateProxyList();
     }
 
-    // Sort by speed (if available) and last checked time
     const sortedProxies = [...this.proxyList].sort((a, b) => {
-      // 优先使用最近测试成功的代理
       if (a.lastChecked && b.lastChecked) {
         return b.lastChecked.getTime() - a.lastChecked.getTime();
       }
       if (a.lastChecked) return -1;
       if (b.lastChecked) return 1;
 
-      // 其次按速度排序
       if (!a.speed) return 1;
       if (!b.speed) return -1;
       return a.speed - b.speed;
     });
 
-    // 并行测试代理
     const chunks: Proxy[][] = [];
     for (let i = 0; i < sortedProxies.length; i += this.MAX_PARALLEL_TESTS) {
       chunks.push(sortedProxies.slice(i, i + this.MAX_PARALLEL_TESTS));
@@ -55,7 +74,6 @@ class ProxyManager {
         chunk.map(proxy => this.testProxy(proxy))
       );
 
-      // 找到第一个可用的代理
       const workingIndex = results.findIndex(speed => speed !== null);
       if (workingIndex !== -1) {
         const workingProxy = chunk[workingIndex];
@@ -68,7 +86,6 @@ class ProxyManager {
       console.log(`❌ 第 ${i + 1} 组代理全部测试失败 All proxies in group ${i + 1} failed`);
     }
 
-    // If no working proxy found, try to update the list once more
     if (this.proxyList.length === 0) {
       console.log('\n💡 代理列表为空，尝试重新获取 Proxy list empty, trying to update...');
       await this.updateProxyList();
@@ -86,13 +103,13 @@ class ProxyManager {
     const results = await Promise.all(
       this.PROXY_SOURCES.map(async (source) => {
         try {
-          console.log(`- 正在获取 Fetching from: ${source}`);
-          const response = await axios.get(source, { timeout: this.TIMEOUT });
-          const proxies = this.parseProxyList(response.data, source);
-          console.log(`✅ 成功获取 ${proxies.length} 个代理 Successfully got ${proxies.length} proxies from ${source}`);
+          console.log(`- 正在获取 Fetching from: ${source.url}`);
+          const response = await axios.get(source.url, { timeout: this.TIMEOUT });
+          const proxies = this.parseProxyList(response.data, source.type);
+          console.log(`✅ 成功获取 ${proxies.length} 个代理 Successfully got ${proxies.length} proxies from ${source.url}`);
           return proxies;
         } catch (error) {
-          console.log(`❌ 获取失败 Failed to fetch from ${source}:`, error instanceof Error ? error.message : 'Unknown error');
+          console.log(`❌ 获取失败 Failed to fetch from ${source.url}:`, error instanceof Error ? error.message : 'Unknown error');
           return [];
         }
       })
@@ -103,30 +120,77 @@ class ProxyManager {
     console.log(`\n📊 代理列表更新完成，共找到 ${this.proxyList.length} 个中国代理 Proxy list updated, found ${this.proxyList.length} Chinese proxies`);
   }
 
-  private parseProxyList(data: any, source: string): Proxy[] {
-    if (source.includes('proxy-list.download')) {
-      // Format: IP:PORT per line
-      return data.split('\n')
-        .filter(Boolean)
-        .map((line: string) => {
-          const [host, port] = line.split(':');
-          return {
-            host,
-            port: parseInt(port),
-            protocol: 'http',
+  private parseProxyList(data: any, sourceType: string): Proxy[] {
+    try {
+      switch (sourceType) {
+        case 'proxy-list.download':
+          return data.split('\n')
+            .filter(Boolean)
+            .map((line: string) => {
+              const [host, port] = line.split(':');
+              return { host, port: parseInt(port), protocol: 'http', country: 'CN' };
+            });
+
+        case 'geonode':
+          return data.data.map((item: any) => ({
+            host: item.ip,
+            port: parseInt(item.port),
+            protocol: item.protocols[0],
             country: 'CN'
-          };
-        });
-    } else if (source.includes('geonode.com')) {
-      // GeoNode API format
-      return data.data.map((item: any) => ({
-        host: item.ip,
-        port: parseInt(item.port),
-        protocol: item.protocols[0],
-        country: 'CN'
-      }));
+          }));
+
+        case 'proxyscrape':
+          return data.split('\n')
+            .filter(Boolean)
+            .map((line: string) => {
+              const [host, port] = line.split(':');
+              return { host, port: parseInt(port), protocol: 'http', country: 'CN' };
+            });
+
+        case 'openproxylist':
+          return data.split('\n')
+            .filter(Boolean)
+            .map((line: string) => {
+              const [host, port] = line.split(':');
+              return { host, port: parseInt(port), protocol: 'http', country: 'CN' };
+            });
+
+        case 'fate0':
+          return data.split('\n')
+            .filter(Boolean)
+            .map((line: string) => {
+              try {
+                const item = JSON.parse(line);
+                if (item.country === 'CN') {
+                  return {
+                    host: item.host,
+                    port: item.port,
+                    protocol: item.type || 'http',
+                    country: 'CN'
+                  };
+                }
+              } catch (e) {}
+              return null;
+            })
+            .filter((item: any) => item !== null);
+
+        case 'sunny9577':
+          return JSON.parse(data)
+            .filter((item: any) => item.country === 'CN')
+            .map((item: any) => ({
+              host: item.ip,
+              port: parseInt(item.port),
+              protocol: 'http',
+              country: 'CN'
+            }));
+
+        default:
+          return [];
+      }
+    } catch (error) {
+      console.log(`解析代理列表失败 Failed to parse proxy list from ${sourceType}:`, error instanceof Error ? error.message : 'Unknown error');
+      return [];
     }
-    return [];
   }
 
   private async testProxy(proxy: Proxy): Promise<number | null> {
@@ -135,7 +199,17 @@ class ProxyManager {
     console.log(`正在测试代理 Testing proxy: ${proxyUrl}`);
 
     try {
-      // Test the proxy with NetEase Music API
+      // 第一步：测试基本连接
+      await axios.get('https://music.163.com', {
+        timeout: this.TIMEOUT,
+        proxy: {
+          host: proxy.host,
+          port: proxy.port,
+          protocol: proxy.protocol
+        }
+      });
+
+      // 第二步：测试API连接
       await axios.get('https://music.163.com/api/v3/playlist/detail', {
         timeout: this.TIMEOUT,
         proxy: {
@@ -145,11 +219,21 @@ class ProxyManager {
         }
       });
 
-      const speed = Date.now() - startTime;
-      console.log(`✅ 代理可用 Proxy working: ${proxyUrl}, 响应时间 Response time: ${speed}ms`);
-      return speed;
+      // 第三步：测试实际歌曲信息获取
+      setProxy(proxyUrl);  // 设置代理
+      try {
+        await getSongInfo(this.TEST_SONG_ID);
+        const speed = Date.now() - startTime;
+        console.log(`✅ 代理完全可用 Proxy fully working: ${proxyUrl}, 响应时间 Response time: ${speed}ms`);
+        return speed;  // 如果测试成功，保持代理设置
+      } catch (error) {
+        console.log(`❌ 代理可连接但无法获取歌曲信息 Proxy connected but failed to get song info: ${proxyUrl}`);
+        setProxy(undefined);  // 只在测试失败时清除代理
+        return null;
+      }
     } catch (error) {
-      console.log(`❌ 代理不可用 Proxy failed: ${proxyUrl}`);
+      console.log(`❌ 代理连接失败 Proxy connection failed: ${proxyUrl}`);
+      setProxy(undefined);  // 只在测试失败时清除代理
       return null;
     }
   }
