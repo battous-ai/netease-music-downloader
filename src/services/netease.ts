@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import * as cheerio from 'cheerio';
 import { createCipheriv, createHash, randomBytes } from 'crypto';
 import { Song, AlbumInfo } from '../types';
@@ -8,6 +8,24 @@ const presetKey = '0CoJUm6Qyw8W8jud';
 const iv = '0102030405060708';
 const eapiKey = 'e82ckenh8dichen8';
 const base62 = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+export let proxyConfig: AxiosRequestConfig | undefined;
+
+export function setProxy(proxyUrl: string | undefined) {
+  if (proxyUrl) {
+    proxyConfig = {
+      proxy: {
+        protocol: proxyUrl.startsWith('https') ? 'https' : 'http',
+        host: new URL(proxyUrl).hostname,
+        port: parseInt(new URL(proxyUrl).port),
+      }
+    };
+    console.log('代理已设置 Proxy configured:', proxyUrl);
+  } else {
+    proxyConfig = undefined;
+    console.log('代理已关闭 Proxy disabled');
+  }
+}
 
 const headers = {
   'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 CloudMusic/2.5.1',
@@ -53,6 +71,21 @@ function eapi(url: string, obj: any) {
   };
 }
 
+async function downloadImage(url: string): Promise<Buffer | null> {
+  try {
+    const response = await axios({
+      method: 'get',
+      url,
+      responseType: 'arraybuffer',
+      ...proxyConfig
+    });
+    return Buffer.from(response.data);
+  } catch (error) {
+    console.error('下载封面图片失败 Failed to download cover image:', error instanceof Error ? error.message : 'Unknown error');
+    return null;
+  }
+}
+
 export async function getSongInfo(id: string): Promise<Song> {
   try {
     const url = '/api/v3/song/detail';
@@ -76,7 +109,8 @@ export async function getSongInfo(id: string): Promise<Song> {
           ...headers,
           'Content-Type': 'application/x-www-form-urlencoded',
           'User-Agent': 'NeteaseMusic/2.5.1 (iPhone; iOS 16.6; Scale/3.00)'
-        }
+        },
+        ...proxyConfig
       }
     );
 
@@ -100,12 +134,7 @@ export async function getSongInfo(id: string): Promise<Song> {
     };
   } catch (error) {
     console.error('获取歌曲信息失败 Failed to get song info:', error instanceof Error ? error.message : 'Unknown error');
-    return {
-      id,
-      name: id,
-      artists: [{ name: '未知歌手 Unknown Artist' }],
-      album: { name: '' }
-    };
+    throw error; // 直接抛出错误，而不是返回默认值
   }
 }
 
@@ -209,7 +238,8 @@ async function getSongUrl(id: string, level: string): Promise<string | null> {
           'Content-Type': 'application/x-www-form-urlencoded',
           'User-Agent': 'NeteaseMusic/2.5.1 (iPhone; iOS 16.6; Scale/3.00)'
         },
-        timeout: 10000
+        timeout: 10000,
+        ...proxyConfig
       }
     );
 
@@ -262,7 +292,8 @@ export async function checkSongAvailability(id: string): Promise<{
             ...headers,
             'Referer': 'https://music.163.com/'
           },
-          timeout: 10000
+          timeout: 10000,
+          ...proxyConfig
         });
 
         const contentLength = parseInt(response.headers['content-length'], 10);
@@ -316,7 +347,8 @@ export async function getLyrics(id: string): Promise<string | null> {
           ...headers,
           'Content-Type': 'application/x-www-form-urlencoded',
           'User-Agent': 'NeteaseMusic/2.5.1 (iPhone; iOS 16.6; Scale/3.00)'
-        }
+        },
+        ...proxyConfig
       }
     );
 

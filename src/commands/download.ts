@@ -2,7 +2,7 @@ import { SingleBar, type Options } from 'cli-progress';
 import axios from 'axios';
 import * as fs from 'fs';
 import NodeID3 from 'node-id3';
-import { getSongInfo, checkSongAvailability, getLyrics } from '../services/netease';
+import { getSongInfo, checkSongAvailability, getLyrics, proxyConfig } from '../services/netease';
 import { sanitizeFileName, getDownloadPath } from '../utils/file';
 import { createSingleBar } from '../utils/progress';
 
@@ -22,7 +22,14 @@ async function downloadImage(url: string): Promise<Buffer | null> {
 
 export async function downloadSong(id: string, progressBar?: SingleBar): Promise<void> {
   try {
-    const song = await getSongInfo(id);
+    let song;
+    try {
+      song = await getSongInfo(id);
+    } catch (error) {
+      console.error(`\n获取歌曲信息失败，跳过下载 Failed to get song info, skipping download (ID: ${id})`);
+      return;
+    }
+
     const songName = song.name;
     const artistName = song.artists?.[0]?.name || '未知歌手 Unknown Artist';
 
@@ -57,7 +64,8 @@ export async function downloadSong(id: string, progressBar?: SingleBar): Promise
     const response = await axios({
       method: 'get',
       url: availability.url,
-      responseType: 'stream'
+      responseType: 'stream',
+      ...proxyConfig
     });
 
     const totalLength = parseInt(response.headers['content-length'], 10);

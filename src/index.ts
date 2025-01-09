@@ -3,12 +3,20 @@
 import { program } from 'commander';
 import { downloadSong } from './commands/download';
 import { downloadAlbum } from './commands/album';
+import { setProxy } from './services/netease';
 import * as fs from 'fs';
 
 program
   .name('netease-downloader')
   .description('网易云音乐下载工具 NetEase Cloud Music Downloader')
-  .version('1.0.0');
+  .version('1.0.0')
+  .option('-p, --proxy <url>', '设置代理服务器 Set proxy server (e.g. http://127.0.0.1:7890)')
+  .hook('preAction', (thisCommand) => {
+    const options = thisCommand.opts();
+    if (options.proxy) {
+      setProxy(options.proxy);
+    }
+  });
 
 program
   .command('download')

@@ -1,5 +1,5 @@
 import { createMultiBar } from '../utils/progress';
-import { getAlbumInfo, checkSongAvailability, getLyrics } from '../services/netease';
+import { getAlbumInfo, checkSongAvailability, getLyrics, proxyConfig } from '../services/netease';
 import { sanitizeFileName, getDownloadPath } from '../utils/file';
 import axios from 'axios';
 import * as fs from 'fs';
@@ -11,7 +11,8 @@ async function downloadImage(url: string): Promise<Buffer | null> {
     const response = await axios({
       method: 'get',
       url,
-      responseType: 'arraybuffer'
+      responseType: 'arraybuffer',
+      ...proxyConfig
     });
     return Buffer.from(response.data);
   } catch (error) {
@@ -32,7 +33,18 @@ export async function downloadAlbum(albumId: string, issueNumber?: number): Prom
       albumId = match[1];
     }
 
-    const { songs, albumName, artistName } = await getAlbumInfo(albumId);
+    let albumInfo;
+    try {
+      albumInfo = await getAlbumInfo(albumId);
+    } catch (error) {
+      console.error('\n获取专辑信息失败，可能是网络问题或代理服务器无响应\nFailed to get album info, might be network issue or proxy server not responding');
+      if (error instanceof Error) {
+        console.error('详细错误 Detailed error:', error.message);
+      }
+      process.exit(1);
+    }
+
+    const { songs, albumName, artistName } = albumInfo;
 
     console.log(`\n专辑信息 Album info: ${albumName} - ${artistName}`);
     console.log(`共 Total: ${songs.length} 首歌曲 songs\n`);
@@ -89,7 +101,8 @@ export async function downloadAlbum(albumId: string, issueNumber?: number): Prom
         const response = await axios({
           method: 'get',
           url: availability.url,
-          responseType: 'stream'
+          responseType: 'stream',
+          ...proxyConfig
         });
 
         const totalLength = parseInt(response.headers['content-length'], 10);
