@@ -4,6 +4,7 @@ import { program } from 'commander';
 import { downloadSong } from './commands/download';
 import { downloadAlbum } from './commands/album';
 import { setProxy } from './services/netease';
+import { getAutoProxy } from './services/proxy';
 import * as fs from 'fs';
 
 program
@@ -11,10 +12,17 @@ program
   .description('网易云音乐下载工具 NetEase Cloud Music Downloader')
   .version('1.0.0')
   .option('-p, --proxy <url>', '设置代理服务器 Set proxy server (e.g. http://127.0.0.1:7890)')
-  .hook('preAction', (thisCommand) => {
+  .option('-a, --auto-proxy', '自动寻找可用的中国代理服务器 Auto find available Chinese proxy server')
+  .hook('preAction', async (thisCommand) => {
     const options = thisCommand.opts();
     if (options.proxy) {
       setProxy(options.proxy);
+    } else if (options.autoProxy) {
+      console.log('正在寻找可用的代理服务器 Finding available proxy server...');
+      const proxyUrl = await getAutoProxy();
+      if (!proxyUrl) {
+        console.error('未找到可用的代理服务器，将尝试直接连接\nNo available proxy found, will try direct connection');
+      }
     }
   });
 
