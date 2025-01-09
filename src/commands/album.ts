@@ -1,5 +1,5 @@
 import { createMultiBar } from '../utils/progress';
-import { getAlbumInfo, checkSongAvailability } from '../services/netease';
+import { getAlbumInfo, checkSongAvailability, getLyrics } from '../services/netease';
 import { sanitizeFileName, getDownloadPath } from '../utils/file';
 import axios from 'axios';
 import * as fs from 'fs';
@@ -54,6 +54,14 @@ export async function downloadAlbum(albumId: string, issueNumber?: number): Prom
         const sanitizedArtistName = sanitizeFileName(artistName);
         const fileName = `${String(i + 1).padStart(2, '0')}.${sanitizedArtistName}-${sanitizedSongName}.mp3`;
         const filePath = getDownloadPath('album', fileName, albumDirName);
+        const lrcPath = getDownloadPath('album', `${String(i + 1).padStart(2, '0')}.${sanitizedArtistName}-${sanitizedSongName}.lrc`, albumDirName);
+
+        // 下载歌词
+        const lyrics = await getLyrics(song.id);
+        if (lyrics) {
+          fs.writeFileSync(lrcPath, lyrics, 'utf8');
+          console.log(`[${i + 1}/${songs.length}] 歌词下载完成 Lyrics downloaded`);
+        }
 
         if (fs.existsSync(filePath)) {
           console.log(`\n[${i + 1}/${songs.length}] ${fileName} (文件已存在，跳过下载 File exists, skipping download)`);

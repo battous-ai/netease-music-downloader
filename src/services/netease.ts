@@ -289,3 +289,51 @@ export async function checkSongAvailability(id: string): Promise<{
 
   return { available: false };
 }
+
+export async function getLyrics(id: string): Promise<string | null> {
+  try {
+    const url = '/api/song/lyric/v1';
+    const data = {
+      id,
+      lv: 1,
+      kv: 1,
+      tv: -1,
+      header: {
+        os: 'iOS',
+        appver: '2.5.1',
+        deviceId: randomBytes(8).toString('hex').toUpperCase(),
+      }
+    };
+
+    const { params } = eapi(url, data);
+    const response = await axios.post(
+      'https://interface3.music.163.com/eapi/song/lyric/v1',
+      new URLSearchParams({
+        params
+      }).toString(),
+      {
+        headers: {
+          ...headers,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'NeteaseMusic/2.5.1 (iPhone; iOS 16.6; Scale/3.00)'
+        }
+      }
+    );
+
+    if (response.data?.code !== 200) {
+      console.error('获取歌词失败 Failed to get lyrics:', response.data?.message || 'Unknown error');
+      return null;
+    }
+
+    const lrc = response.data?.lrc?.lyric;
+    if (!lrc) {
+      console.log('该歌曲无歌词 No lyrics available for this song');
+      return null;
+    }
+
+    return lrc;
+  } catch (error) {
+    console.error('获取歌词失败 Failed to get lyrics:', error instanceof Error ? error.message : 'Unknown error');
+    return null;
+  }
+}

@@ -2,7 +2,7 @@ import { SingleBar, type Options } from 'cli-progress';
 import axios from 'axios';
 import * as fs from 'fs';
 import NodeID3 from 'node-id3';
-import { getSongInfo, checkSongAvailability } from '../services/netease';
+import { getSongInfo, checkSongAvailability, getLyrics } from '../services/netease';
 import { sanitizeFileName, getDownloadPath } from '../utils/file';
 import { createSingleBar } from '../utils/progress';
 
@@ -38,6 +38,14 @@ export async function downloadSong(id: string, progressBar?: SingleBar): Promise
     const sanitizedArtistName = sanitizeFileName(artistName);
     const fileName = `${sanitizedArtistName}-${sanitizedSongName}.mp3`;
     const filePath = getDownloadPath('single', fileName);
+    const lrcPath = getDownloadPath('single', `${sanitizedArtistName}-${sanitizedSongName}.lrc`);
+
+    // 下载歌词
+    const lyrics = await getLyrics(id);
+    if (lyrics) {
+      fs.writeFileSync(lrcPath, lyrics, 'utf8');
+      console.log('歌词下载完成 Lyrics downloaded');
+    }
 
     if (fs.existsSync(filePath)) {
       console.log(`文件已存在，跳过下载 File exists, skipping download: ${fileName}`);
