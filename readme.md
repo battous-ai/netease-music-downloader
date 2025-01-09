@@ -16,6 +16,7 @@ A simple and easy-to-use tool for downloading music from NetEase Cloud Music. Su
 - ⚡️ Auto-skip downloaded files
 - 🔍 Auto-detect unavailable or copyright-protected songs
 - 📝 Auto-download lyrics (if available)
+- 🌐 Support proxy configuration
 
 ## Usage
 
@@ -40,6 +41,9 @@ npx netease-music-downloader download 426832090
 
 # Download an album
 npx netease-music-downloader album 34836039
+
+# Download with proxy
+npx netease-music-downloader download 426832090 --proxy http://127.0.0.1:7890
 ```
 
 ### 3. Local Development
@@ -59,6 +63,9 @@ pnpm install
 # Run commands
 pnpm start download 426832090  # Download a song
 pnpm start album 34836039     # Download an album
+
+# Run with proxy
+pnpm start download 426832090 --proxy http://127.0.0.1:7890
 ```
 
 ## How to Get Music ID?
@@ -82,6 +89,23 @@ downloads/
     ├── 02.artist-song2.lrc
     └── ...
 ```
+
+## Using Proxy
+
+If you're having trouble accessing NetEase Music directly, you can use a proxy:
+
+```bash
+# Format
+pnpm start download <song_id> --proxy <proxy_url>
+
+# Example with HTTP proxy
+pnpm start download 426832090 --proxy http://127.0.0.1:7890
+
+# Example with album download using proxy
+pnpm start album 34836039 --proxy http://127.0.0.1:7890
+```
+
+Note: When using a proxy, prefer using `http://` instead of `https://` for the proxy URL, as some proxy servers may not properly support HTTPS connections.
 
 ## Notes
 
