@@ -203,14 +203,15 @@ async function main() {
 
                 while (retryCount < maxRetries && !success) {
                     try {
-                        const output = execSync(`node dist/index.js ${type === 'song' ? 'download' : 'album'} ${musicId} --auto-proxy --timeout 30000`, {
-                            stdio: ['pipe', 'pipe', 'inherit'],
+                        // 先执行一次命令来获取歌曲信息
+                        const infoOutput = execSync(`node dist/index.js download ${musicId} --auto-proxy --timeout 30000`, {
+                            stdio: 'pipe',
                             encoding: 'utf8',
                             timeout: 180000 // 3 minutes timeout
                         });
 
                         // 尝试从输出中提取歌曲信息
-                        const songInfoMatch = output.match(/歌曲信息 Song info: (.+?) - (.+)/);
+                        const songInfoMatch = infoOutput.match(/歌曲信息 Song info: (.+?) - (.+)/);
                         if (songInfoMatch) {
                             songName = songInfoMatch[1];
                             artistName = songInfoMatch[2];
@@ -221,8 +222,14 @@ async function main() {
                                 `歌手 Artist: ${artistName}\n\n` +
                                 `⏳ 下载中 Downloading...`
                             );
+
+                            // 然后再次执行命令来实际下载，这次显示进度条
+                            execSync(`node dist/index.js download ${musicId} --auto-proxy --timeout 30000`, {
+                                stdio: 'inherit',
+                                timeout: 180000 // 3 minutes timeout
+                            });
+                            success = true;
                         }
-                        success = true;
                     } catch (error) {
                         retryCount++;
                         if (retryCount === maxRetries) {
@@ -261,14 +268,15 @@ async function main() {
             let songCount = 0;
 
             try {
-                const output = execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
-                    stdio: ['pipe', 'pipe', 'inherit'],
+                // 先执行一次命令来获取专辑信息
+                const infoOutput = execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
+                    stdio: 'pipe',
                     encoding: 'utf8'
                 });
 
                 // 尝试从输出中提取专辑信息
-                const albumInfoMatch = output.match(/专辑信息 Album info: (.+?) - (.+)/);
-                const songCountMatch = output.match(/共 Total: (\d+) 首歌曲 songs/);
+                const albumInfoMatch = infoOutput.match(/专辑信息 Album info: (.+?) - (.+)/);
+                const songCountMatch = infoOutput.match(/共 Total: (\d+) 首歌曲 songs/);
 
                 if (albumInfoMatch) {
                     albumName = albumInfoMatch[1];
@@ -285,6 +293,11 @@ async function main() {
                         `歌曲数 Songs: ${songCount} 首\n\n` +
                         `⏳ 下载中 Downloading...`
                     );
+
+                    // 然后再次执行命令来实际下载，这次显示进度条
+                    execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
+                        stdio: 'inherit'
+                    });
                 }
             } catch (error) {
                 console.error('Error during album download:', error);
