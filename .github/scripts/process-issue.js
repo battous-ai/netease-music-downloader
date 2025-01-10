@@ -205,10 +205,10 @@ async function main() {
                     try {
                         // 先执行一次命令来获取歌曲信息
                         console.log('Fetching song info...');
-                        const infoOutput = execSync(`node dist/index.js download ${musicId} --auto-proxy --timeout 30000`, {
-                            stdio: ['pipe', 'pipe', process.stderr],
+                        const infoOutput = execSync(`node dist/index.js download ${musicId} --auto-proxy`, {
+                            stdio: ['pipe', 'pipe', 'pipe'],
                             encoding: 'utf8',
-                            timeout: 180000 // 3 minutes timeout
+                            timeout: 180000 // 3 minutes timeout for the process itself
                         });
                         console.log('Info output:', infoOutput);
 
@@ -230,9 +230,9 @@ async function main() {
 
                             // 然后再次执行命令来实际下载，这次显示进度条
                             console.log('Starting actual download...');
-                            execSync(`node dist/index.js download ${musicId} --auto-proxy --timeout 30000`, {
+                            execSync(`node dist/index.js download ${musicId} --auto-proxy`, {
                                 stdio: 'inherit',
-                                timeout: 180000 // 3 minutes timeout
+                                timeout: 180000 // 3 minutes timeout for the process itself
                             });
                             success = true;
                         } else {
@@ -306,14 +306,12 @@ async function main() {
                         songCount = parseInt(songCountMatch[1]);
                     }
 
-                    // 更新进度信息，包含更多详细信息
+                    // 更新进度信息，只包含必要信息
                     const updateMessage = `💿 正在下载 Downloading:\n` +
                         `专辑 Album: ${albumName}\n` +
                         `歌手 Artist: ${artistName}\n` +
                         `歌曲数 Songs: ${songCount} 首\n\n` +
-                        `⏳ 下载中 Downloading...\n\n` +
-                        `详细信息 Details:\n` +
-                        `${parseOutput.split('\n').filter(line => line.trim()).join('\n')}`;
+                        `⏳ 下载中 Downloading...`;
 
                     console.log('Updating progress with message:', updateMessage);
                     await updateProgress(octokit, owner, repo, issueNumber, updateMessage);
@@ -429,3 +427,4 @@ main().catch(error => {
     console.error('Top level error:', error);
     process.exit(1);
 });
+
