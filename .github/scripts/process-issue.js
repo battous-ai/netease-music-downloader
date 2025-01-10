@@ -170,6 +170,10 @@ async function main() {
         const type = typeMatch[1].trim().startsWith('Single Song') ? 'song' : 'album';
         const musicId = idMatch[1].trim();
 
+        // 定义变量
+        let songInfo = 'Unknown';
+        let albumInfo = 'Unknown';
+
         console.log('Parsed type:', type);
         console.log('Parsed musicId:', musicId);
 
@@ -189,7 +193,10 @@ async function main() {
 
                 // 从文件系统中获取下载的文件信息
                 const downloadedFiles = glob.sync('downloads/**/*.mp3');
-                const songInfo = downloadedFiles.length > 0 ? path.basename(downloadedFiles[0], '.mp3') : 'Unknown';
+                if (downloadedFiles.length > 0) {
+                    const filePath = downloadedFiles[0];
+                    songInfo = path.basename(filePath, '.mp3');
+                }
 
                 if (downloadedFiles.length === 0) {
                     await octokit.issues.createComment({
@@ -212,7 +219,11 @@ async function main() {
 
             // 从文件系统中获取下载的文件信息
             const downloadedFiles = glob.sync('downloads/**/*.mp3');
-            const albumInfo = downloadedFiles.length > 0 ? path.dirname(downloadedFiles[0]).split('/').pop() : 'Unknown';
+            if (downloadedFiles.length > 0) {
+                const filePath = downloadedFiles[0];
+                const albumDir = path.dirname(filePath);
+                albumInfo = path.basename(albumDir);
+            }
         }
 
         // 检查下载结果
