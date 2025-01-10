@@ -186,12 +186,24 @@ async function main() {
         // 获取歌曲或专辑信息
         let initialInfo;
         try {
-            const output = execSync(`node dist/index.js info ${type} ${musicId}`, {
-                encoding: 'utf8'
+            console.log(`Fetching ${type} info for ID: ${musicId}`);
+            const output = execSync(`node dist/index.js info ${type} ${musicId} --json`, {
+                encoding: 'utf8',
+                stdio: ['pipe', 'pipe', 'pipe']
             });
-            initialInfo = JSON.parse(output);
+            console.log('Info command output:', output);
+            try {
+                initialInfo = JSON.parse(output.trim());
+                console.log('Parsed info:', initialInfo);
+            } catch (parseError) {
+                console.error('Error parsing info output:', parseError);
+                console.error('Raw output:', output);
+                initialInfo = null;
+            }
         } catch (error) {
-            console.error('Error fetching initial info:', error);
+            console.error('Error executing info command:', error);
+            if (error.stdout) console.log('Command stdout:', error.stdout);
+            if (error.stderr) console.error('Command stderr:', error.stderr);
             initialInfo = null;
         }
 
@@ -201,13 +213,15 @@ async function main() {
         statusMessage += `🎵 ID: ${musicId}\n`;
 
         if (initialInfo) {
-            if (type === 'song') {
+            if (type === 'song' && initialInfo.name && initialInfo.artists) {
                 statusMessage += `🎵 歌曲 Song: ${initialInfo.name}\n`;
                 statusMessage += `👤 歌手 Artist: ${initialInfo.artists.join(', ')}\n`;
-            } else {
+            } else if (type === 'album' && initialInfo.name && initialInfo.artist) {
                 statusMessage += `💿 专辑 Album: ${initialInfo.name}\n`;
                 statusMessage += `👤 歌手 Artist: ${initialInfo.artist}\n`;
-                statusMessage += `📊 歌曲数 Songs: ${initialInfo.songCount} 首\n`;
+                if (initialInfo.songCount) {
+                    statusMessage += `📊 歌曲数 Songs: ${initialInfo.songCount} 首\n`;
+                }
             }
         }
 
