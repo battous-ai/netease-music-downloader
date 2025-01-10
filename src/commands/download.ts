@@ -1,7 +1,6 @@
 import { SingleBar, type Options } from 'cli-progress';
 import axios from 'axios';
 import * as fs from 'fs';
-import NodeID3 from 'node-id3';
 import { getSongInfo, checkSongAvailabilityWithRetry, getLyrics, proxyConfig } from '../services/netease';
 import { getAutoProxy } from '../services/proxy';
 import { sanitizeFileName, getDownloadPath } from '../utils/file';
@@ -111,38 +110,6 @@ export async function downloadSong(id: string, progressBar?: SingleBar, options?
           bar.stop();
           if (downloadedBytes >= totalLength * 0.99) { // 允许1%的误差
             console.log(`\n下载完成 Download completed: ${fileName}`);
-
-            // 写入元数据
-            console.log('正在写入音乐标签 Writing music tags...');
-            const tags: NodeID3.Tags = {
-              title: song.name,
-              artist: song.artists?.map(a => a.name).join(', '),
-              album: song.album?.name,
-              year: song.publishTime ? new Date(song.publishTime).getFullYear().toString() : undefined,
-              trackNumber: undefined,
-              performerInfo: song.artists?.map(a => a.name).join(', '),
-              length: song.duration?.toString(),
-            };
-
-            // 下载并添加封面
-            if (song.album?.picUrl) {
-              const imageBuffer = await downloadImage(song.album.picUrl);
-              if (imageBuffer) {
-                tags.image = {
-                  mime: 'image/jpeg',
-                  type: {
-                    id: 3,
-                    name: 'front cover'
-                  },
-                  description: 'Album cover',
-                  imageBuffer
-                };
-              }
-            }
-
-            NodeID3.write(tags, filePath);
-            console.log('音乐标签写入完成 Music tags written successfully');
-
             resolve(true);
           } else {
             if (fs.existsSync(filePath)) {
