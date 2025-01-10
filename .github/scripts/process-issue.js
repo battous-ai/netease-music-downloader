@@ -101,12 +101,34 @@ async function createRelease(octokit, owner, repo, tag, files, type, musicId) {
 }
 
 async function updateProgress(octokit, owner, repo, issueNumber, message) {
-    await octokit.issues.createComment({
-        owner,
-        repo,
-        issue_number: issueNumber,
-        body: message
-    });
+    const maxRetries = 3;
+    let retryCount = 0;
+    let lastError;
+
+    while (retryCount < maxRetries) {
+        try {
+            await octokit.issues.createComment({
+                owner,
+                repo,
+                issue_number: issueNumber,
+                body: message
+            });
+            return;
+        } catch (error) {
+            lastError = error;
+            retryCount++;
+            console.log(`Failed to update progress (attempt ${retryCount}/${maxRetries}):`, error.message);
+            if (retryCount < maxRetries) {
+                // Wait for a short time before retrying (exponential backoff)
+                const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+    }
+
+    // If we get here, all retries failed
+    console.error('Failed to update progress after all retries:', lastError);
+    // Don't throw the error, just log it and continue
 }
 
 async function main() {
@@ -394,7 +416,8 @@ async function main() {
         }).join('\n');
 
         await updateProgress(octokit, owner, repo, issueNumber,
-            `🎉 处理完成！您可以从以下链接下载音乐文件：\nProcessing completed! You can download the music files from the following links:\n\n${downloadLinks}\n\n或访问 Or visit [Release 页面 page](${release.html_url})\n\n⚠️ 注意：下载链接将在 3 小时后失效，请尽快下载！\nNote: Download links will expire in 3 hours, please download as soon as possible!`);
+            `🎉 处理完成！您可以从以下链接下载音乐文件：\nProcessing completed! You can download the music files from the following links:\n\n${downloadLinks}\n\n或访问 Or visit [Release 页面 page](${release.html_url})\n\n⚠️ 注意：下载链接将在 3 小时后失效，请尽快下载！\nNote: Download links will expire in 3 hours, please download as soon as possible!`
+        );
 
         // 清理下载的文件
         execSync('rm -rf downloads/*');
