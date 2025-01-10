@@ -23,7 +23,7 @@ A simple and easy-to-use tool for downloading music from NetEase Cloud Music. Su
 
 ### 1. Download via GitHub Issue (Recommended)
 
-The easiest way to use, no installation required (due to the server being located overseas, some songs may not be downloaded):
+The easiest way to use, no installation required. The program will first try a direct connection, and if that fails (which may happen as the GitHub Actions server is located overseas), it will automatically use a proxy to ensure successful downloads:
 
 1. Visit [Issues page](https://github.com/Gaohaoyang/netease-music-downloader/issues)
 2. Click "New Issue"
@@ -103,7 +103,7 @@ If you're having trouble accessing NetEase Music directly, you can use a proxy i
 
 ### 1. Auto Proxy (Recommended)
 
-The program will first try direct connection, and if that fails, it will automatically find and use an available Chinese proxy:
+The program will first try a direct connection for each song. If that fails, it will automatically find and use an available Chinese proxy:
 
 ```bash
 # Format
@@ -115,6 +115,8 @@ pnpm start download 426832090 --auto-proxy
 # Example with album download
 pnpm start album 34836039 --auto-proxy
 ```
+
+When downloading an album, each song will first attempt a direct connection. If a song requires a proxy, it will be used only for that specific song, and the next song will start with a direct connection attempt again.
 
 ### 2. Manual Proxy
 

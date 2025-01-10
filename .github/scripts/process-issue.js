@@ -183,7 +183,7 @@ async function main() {
             console.log('Downloading song:', musicId);
             try {
                 // 执行下载并捕获输出
-                const output = execSync(`node dist/index.js download ${musicId}`, {
+                const output = execSync(`node dist/index.js download ${musicId} --auto-proxy`, {
                     stdio: 'pipe',
                     encoding: 'utf8'
                 });
@@ -212,7 +212,7 @@ async function main() {
             }
         } else {
             console.log('Downloading album:', musicId);
-            const output = execSync(`node dist/index.js album ${musicId}`, {
+            const output = execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
                 stdio: 'pipe',
                 encoding: 'utf8'
             });
