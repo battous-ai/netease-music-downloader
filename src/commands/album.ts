@@ -1,5 +1,5 @@
 import { createMultiBar } from '../utils/progress';
-import { getAlbumInfo, checkSongAvailability, getLyrics, proxyConfig } from '../services/netease';
+import { getAlbumInfo, checkSongAvailabilityWithRetry, getLyrics, proxyConfig } from '../services/netease';
 import { sanitizeFileName, getDownloadPath } from '../utils/file';
 import axios from 'axios';
 import * as fs from 'fs';
@@ -21,7 +21,7 @@ async function downloadImage(url: string): Promise<Buffer | null> {
   }
 }
 
-export async function downloadAlbum(albumId: string, issueNumber?: number): Promise<void> {
+export async function downloadAlbum(albumId: string, issueNumber?: number, options?: { autoProxy?: boolean }): Promise<void> {
   try {
     // 从URL中提取ID Extract ID from URL
     if (albumId.includes('music.163.com')) {
@@ -69,7 +69,7 @@ export async function downloadAlbum(albumId: string, issueNumber?: number): Prom
         const artistName = song.artists?.[0]?.name || '未知歌手 Unknown Artist';
         const displayName = `${artistName}-${songName}`;
 
-        const availability = await checkSongAvailability(song.id);
+        const availability = await checkSongAvailabilityWithRetry(song.id, options?.autoProxy);
         if (!availability.available || !availability.url) {
           console.log(`\n[${i + 1}/${songs.length}] ${displayName} (歌曲已下架或无版权，跳过下载 Song is unavailable or no copyright, skipping download)`);
           downloadResults.skipped.push(`${displayName} (无版权或已下架)`);
@@ -102,7 +102,7 @@ export async function downloadAlbum(albumId: string, issueNumber?: number): Prom
           method: 'get',
           url: availability.url,
           responseType: 'stream',
-          ...proxyConfig
+          ...(availability.needProxy ? proxyConfig : {})
         });
 
         const totalLength = parseInt(response.headers['content-length'], 10);

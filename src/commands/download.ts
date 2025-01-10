@@ -2,7 +2,7 @@ import { SingleBar, type Options } from 'cli-progress';
 import axios from 'axios';
 import * as fs from 'fs';
 import NodeID3 from 'node-id3';
-import { getSongInfo, checkSongAvailability, getLyrics, proxyConfig } from '../services/netease';
+import { getSongInfo, checkSongAvailabilityWithRetry, getLyrics, proxyConfig } from '../services/netease';
 import { sanitizeFileName, getDownloadPath } from '../utils/file';
 import { createSingleBar } from '../utils/progress';
 
@@ -20,7 +20,7 @@ async function downloadImage(url: string): Promise<Buffer | null> {
   }
 }
 
-export async function downloadSong(id: string, progressBar?: SingleBar): Promise<void> {
+export async function downloadSong(id: string, progressBar?: SingleBar, options?: { autoProxy?: boolean }): Promise<void> {
   try {
     let song;
     try {
@@ -35,7 +35,7 @@ export async function downloadSong(id: string, progressBar?: SingleBar): Promise
 
     console.log(`\n歌曲信息 Song info: ${artistName}-${songName}`);
 
-    const availability = await checkSongAvailability(id);
+    const availability = await checkSongAvailabilityWithRetry(id, options?.autoProxy);
     if (!availability.available || !availability.url) {
       console.log(`歌曲已下架或无版权，跳过下载\nSong is unavailable or no copyright, skipping download`);
       return;
@@ -65,7 +65,7 @@ export async function downloadSong(id: string, progressBar?: SingleBar): Promise
       method: 'get',
       url: availability.url,
       responseType: 'stream',
-      ...proxyConfig
+      ...(availability.needProxy ? proxyConfig : {})
     });
 
     const totalLength = parseInt(response.headers['content-length'], 10);

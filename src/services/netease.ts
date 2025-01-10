@@ -2,6 +2,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 import * as cheerio from 'cheerio';
 import { createCipheriv, createHash, randomBytes } from 'crypto';
 import { Song, AlbumInfo } from '../types';
+import { getAutoProxy } from './proxy';
 
 // 网易云音乐 API 加密参数
 const presetKey = '0CoJUm6Qyw8W8jud';
@@ -23,7 +24,6 @@ export function setProxy(proxyUrl: string | undefined) {
     console.log('代理已设置 Proxy configured:', proxyUrl);
   } else {
     proxyConfig = undefined;
-    console.log('代理已关闭 Proxy disabled');
   }
 }
 
@@ -368,4 +368,56 @@ export async function getLyrics(id: string): Promise<string | null> {
     console.error('获取歌词失败 Failed to get lyrics:', error instanceof Error ? error.message : 'Unknown error');
     return null;
   }
+}
+
+export async function checkSongAvailabilityWithRetry(id: string, autoProxy?: boolean): Promise<{
+  available: boolean;
+  contentLength?: number;
+  url?: string;
+  needProxy?: boolean;
+}> {
+  // 先尝试直连
+  console.log('尝试直连下载 Trying direct connection...');
+  const originalProxy = proxyConfig;
+  setProxy(undefined);
+
+  try {
+    const result = await checkSongAvailability(id);
+    if (result.available) {
+      console.log('直连成功 Direct connection successful');
+      return { ...result, needProxy: false };
+    }
+  } catch (error) {
+    console.log('直连失败 Direct connection failed');
+  }
+
+  // 如果直连失败且启用了自动代理，尝试寻找可用代理
+  if (autoProxy) {
+    console.log('正在寻找可用的代理服务器 Finding available proxy server...');
+    const proxyUrl = await getAutoProxy();
+    if (proxyUrl) {
+      try {
+        const result = await checkSongAvailability(id);
+        return { ...result, needProxy: true };
+      } catch (error) {
+        console.log('代理连接也失败了 Proxy connection also failed');
+      }
+    } else {
+      console.log('未找到可用的代理服务器 No available proxy found');
+    }
+  }
+  // 如果有预设的代理配置，尝试使用
+  else if (originalProxy?.proxy && typeof originalProxy.proxy !== 'boolean') {
+    console.log('尝试使用预设代理 Trying with preset proxy...');
+    const proxyUrl = `${originalProxy.proxy.protocol}://${originalProxy.proxy.host}:${originalProxy.proxy.port}`;
+    setProxy(proxyUrl);
+    try {
+      const result = await checkSongAvailability(id);
+      return { ...result, needProxy: true };
+    } catch (error) {
+      console.log('代理连接也失败了 Proxy connection also failed');
+    }
+  }
+
+  return { available: false, needProxy: false };
 }

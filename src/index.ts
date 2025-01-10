@@ -12,17 +12,11 @@ program
   .description('网易云音乐下载工具 NetEase Cloud Music Downloader')
   .version('1.0.0')
   .option('-p, --proxy <url>', '设置代理服务器 Set proxy server (e.g. http://127.0.0.1:7890)')
-  .option('-a, --auto-proxy', '自动寻找可用的中国代理服务器 Auto find available Chinese proxy server')
+  .option('-a, --auto-proxy', '当直连失败时自动寻找可用的中国代理服务器 Auto find available Chinese proxy server when direct connection fails')
   .hook('preAction', async (thisCommand) => {
     const options = thisCommand.opts();
     if (options.proxy) {
       setProxy(options.proxy);
-    } else if (options.autoProxy) {
-      console.log('正在寻找可用的代理服务器 Finding available proxy server...');
-      const proxyUrl = await getAutoProxy();
-      if (!proxyUrl) {
-        console.error('未找到可用的代理服务器，将尝试直接连接\nNo available proxy found, will try direct connection');
-      }
     }
   });
 
@@ -50,14 +44,14 @@ program
     musicIds = [...new Set(musicIds)];
 
     if (musicIds.length === 0) {
-      console.error('请提供至少一个音乐ID Please provide at least one music ID');
+      console.error('请提供音乐ID Please provide music ID(s)');
       process.exit(1);
     }
 
     console.log(`准备下载 Preparing to download ${musicIds.length} 首歌曲 songs`);
 
     for (const id of musicIds) {
-      await downloadSong(id);
+      await downloadSong(id, undefined, { autoProxy: program.opts().autoProxy });
     }
 
     console.log('\n所有下载任务完成！All download tasks completed!');
@@ -67,6 +61,8 @@ program
   .command('album')
   .description('下载整张专辑 Download full album')
   .argument('<albumId>', '专辑ID或URL Album ID or URL')
-  .action(downloadAlbum);
+  .action(async (albumId: string) => {
+    await downloadAlbum(albumId, undefined, { autoProxy: program.opts().autoProxy });
+  });
 
 program.parse();
