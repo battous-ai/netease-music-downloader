@@ -183,21 +183,15 @@ async function main() {
             console.log('Downloading song:', musicId);
             try {
                 // 执行下载并捕获输出
-                const output = execSync(`node dist/index.js download ${musicId} --auto-proxy`, {
-                    stdio: 'pipe',
-                    encoding: 'utf8'
+                execSync(`node dist/index.js download ${musicId} --auto-proxy`, {
+                    stdio: 'inherit'  // 使用 inherit 来显示实时输出
                 });
 
-                // 先尝试获取并显示歌曲信息
-                const songNameMatch = output.match(/歌曲信息 Song info:\s*(.+?)(?:\n|$)/);
-                if (songNameMatch) {
-                    songInfo = songNameMatch[1].trim();
-                    await updateProgress(octokit, owner, repo, issueNumber,
-                        `ℹ️ 歌曲信息 Song info: ${songInfo}`);
-                }
+                // 从文件系统中获取下载的文件信息
+                const downloadedFiles = glob.sync('downloads/**/*.mp3');
+                const songInfo = downloadedFiles.length > 0 ? path.basename(downloadedFiles[0], '.mp3') : 'Unknown';
 
-                // 检查输出中是否包含无版权或下架的提示
-                if (output.includes('无版权') || output.includes('已下架')) {
+                if (downloadedFiles.length === 0) {
                     await octokit.issues.createComment({
                         owner,
                         repo,
@@ -212,18 +206,13 @@ async function main() {
             }
         } else {
             console.log('Downloading album:', musicId);
-            const output = execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
-                stdio: 'pipe',
-                encoding: 'utf8'
+            execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
+                stdio: 'inherit'  // 使用 inherit 来显示实时输出
             });
 
-            // 从输出中解析专辑信息
-            const albumInfoMatch = output.match(/专辑信息 Album info:\s*(.+?)(?:\n|$)/);
-            if (albumInfoMatch) {
-                albumInfo = albumInfoMatch[1].trim();
-                await updateProgress(octokit, owner, repo, issueNumber,
-                    `ℹ️ 获取到专辑信息 Album info: ${albumInfo}`);
-            }
+            // 从文件系统中获取下载的文件信息
+            const downloadedFiles = glob.sync('downloads/**/*.mp3');
+            const albumInfo = downloadedFiles.length > 0 ? path.dirname(downloadedFiles[0]).split('/').pop() : 'Unknown';
         }
 
         // 检查下载结果
