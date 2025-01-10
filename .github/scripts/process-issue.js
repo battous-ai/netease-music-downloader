@@ -280,15 +280,21 @@ async function main() {
                 // 先执行一次命令来获取专辑信息
                 console.log('Fetching album info...');
                 const infoOutput = execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
-                    stdio: ['pipe', 'pipe', 'pipe'],
+                    stdio: 'inherit', // 使用 inherit 来显示所有输出
                     encoding: 'utf8',
                     timeout: 180000 // 3 minutes timeout for the process itself
                 });
-                console.log('Album info output:', infoOutput);
+
+                // 再次执行命令来获取专辑信息用于解析
+                const parseOutput = execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
+                    stdio: ['pipe', 'pipe', 'pipe'],
+                    encoding: 'utf8',
+                    timeout: 180000
+                });
 
                 // 尝试从输出中提取专辑信息，使用更宽松的正则表达式
-                const albumInfoMatch = infoOutput.match(/专辑信息 Album info:[\s\n]*([^-\n]+)[\s-]*([^\n]+)/);
-                const songCountMatch = infoOutput.match(/共 Total:[\s]*(\d+)[\s]*首歌曲/);
+                const albumInfoMatch = parseOutput.match(/专辑信息 Album info:[\s\n]*([^-\n]+)[\s-]*([^\n]+)/);
+                const songCountMatch = parseOutput.match(/共 Total:[\s]*(\d+)[\s]*首歌曲/);
 
                 console.log('Album info match:', albumInfoMatch);
                 console.log('Song count match:', songCountMatch);
@@ -307,15 +313,15 @@ async function main() {
                         `歌曲数 Songs: ${songCount} 首\n\n` +
                         `⏳ 下载中 Downloading...\n\n` +
                         `详细信息 Details:\n` +
-                        `${infoOutput.split('\n').filter(line => line.trim()).join('\n')}`;
+                        `${parseOutput.split('\n').filter(line => line.trim()).join('\n')}`;
 
                     console.log('Updating progress with message:', updateMessage);
                     await updateProgress(octokit, owner, repo, issueNumber, updateMessage);
 
-                    // 然后再次执行命令来实际下载，这次使用 inherit 来显示实时进度
+                    // 然后再次执行命令来实际下载，使用 inherit 来显示实时进度
                     console.log('Starting actual download...');
                     execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
-                        stdio: 'inherit',
+                        stdio: 'inherit', // 使用 inherit 来显示所有输出
                         timeout: 180000 // 3 minutes timeout for the process itself
                     });
 
