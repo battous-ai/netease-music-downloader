@@ -187,9 +187,27 @@ async function main() {
             console.log('Downloading song:', musicId);
             try {
                 // 执行下载并捕获输出
-                execSync(`node dist/index.js download ${musicId} --auto-proxy`, {
-                    stdio: 'inherit'  // 使用 inherit 来显示实时输出
-                });
+                const maxRetries = 3;
+                let retryCount = 0;
+                let success = false;
+
+                while (retryCount < maxRetries && !success) {
+                    try {
+                        execSync(`node dist/index.js ${type === 'song' ? 'download' : 'album'} ${musicId} --auto-proxy --timeout 30000`, {
+                            stdio: 'inherit',
+                            timeout: 180000 // 3 minutes timeout
+                        });
+                        success = true;
+                    } catch (error) {
+                        retryCount++;
+                        if (retryCount === maxRetries) {
+                            throw error;
+                        }
+                        console.log(`\n下载超时或失败，正在进行第 ${retryCount}/${maxRetries} 次重试...\nDownload timeout or failed, retrying ${retryCount}/${maxRetries}...`);
+                        // 等待5秒后重试
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+                    }
+                }
 
                 // 从文件系统中获取下载的文件信息
                 const downloadedFiles = glob.sync('downloads/**/*.mp3');
