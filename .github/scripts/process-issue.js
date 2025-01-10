@@ -183,6 +183,14 @@ async function main() {
             return;
         }
 
+        // 添加初始状态更新
+        await updateProgress(octokit, owner, repo, issueNumber,
+            `🚀 开始处理下载请求...\nStarting to process download request...\n\n` +
+            `📥 类型 Type: ${type === 'song' ? '单曲 Single song' : '专辑 Album'}\n` +
+            `🎵 ID: ${musicId}\n\n` +
+            `⏳ 正在尝试下载，请稍候...\nTrying to download, please wait...`
+        );
+
         if (type === 'song') {
             console.log('Downloading song:', musicId);
             try {
