@@ -46,9 +46,13 @@ export async function downloadSong(id: string, progressBar?: SingleBar, options?
         return false;
       }
 
+      // 获取文件格式
+      const fileExtension = availability.type || availability.url.split('.').pop()?.split('?')[0] || 'mp3';
+      console.log(`获取到音质 Quality: ${availability.quality || 'unknown'}, 比特率 Bitrate: ${availability.bitrate || 'unknown'}kbps, 格式 Format: ${fileExtension}`);
+
       const sanitizedSongName = sanitizeFileName(songName);
       const sanitizedArtistName = sanitizeFileName(artistName);
-      const fileName = `${sanitizedArtistName}-${sanitizedSongName}.mp3`;
+      const fileName = `${sanitizedArtistName}-${sanitizedSongName}.${fileExtension}`;
       const filePath = getDownloadPath('single', fileName);
       const lrcPath = getDownloadPath('single', `${sanitizedArtistName}-${sanitizedSongName}.lrc`);
 
@@ -57,6 +61,7 @@ export async function downloadSong(id: string, progressBar?: SingleBar, options?
       if (lyrics) {
         fs.writeFileSync(lrcPath, lyrics, 'utf8');
         console.log('歌词下载完成 Lyrics downloaded');
+        console.log('网页链接 Web URL:', `https://music.163.com/#/song?id=${id}`);
       }
 
       if (fs.existsSync(filePath)) {

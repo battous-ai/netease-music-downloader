@@ -279,6 +279,9 @@ export async function checkSongAvailability(id: string): Promise<{
   available: boolean;
   contentLength?: number;
   url?: string;
+  quality?: string;
+  bitrate?: number;
+  type?: string;
 }> {
   // 尝试获取最高音质
   for (const level of QUALITY_LEVELS) {
@@ -301,7 +304,10 @@ export async function checkSongAvailability(id: string): Promise<{
           return {
             available: true,
             contentLength,
-            url
+            url,
+            quality: level,
+            bitrate: Math.floor(contentLength * 8 / (response.headers['content-duration'] || 300) / 1000), // 估算比特率
+            type: url.split('.').pop()?.split('?')[0]
           };
         }
       } catch (error) {
@@ -337,8 +343,11 @@ export async function getLyrics(id: string): Promise<string | null> {
     };
 
     const { params } = eapi(url, data);
+    const apiUrl = 'https://interface3.music.163.com/eapi/song/lyric/v1';
+    console.log('歌词链接 Lyrics URL:', `https://music.163.com/api/song/lyric?id=${id}&lv=1&kv=1&tv=-1`);
+
     const response = await axios.post(
-      'https://interface3.music.163.com/eapi/song/lyric/v1',
+      apiUrl,
       new URLSearchParams({
         params
       }).toString(),
@@ -375,6 +384,9 @@ export async function checkSongAvailabilityWithRetry(id: string, autoProxy?: boo
   contentLength?: number;
   url?: string;
   needProxy?: boolean;
+  quality?: string;
+  bitrate?: number;
+  type?: string;
 }> {
   // 先尝试直连
   console.log('尝试直连下载 Trying direct connection...');

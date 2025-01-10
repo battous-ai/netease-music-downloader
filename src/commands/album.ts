@@ -4,7 +4,6 @@ import { sanitizeFileName, getDownloadPath } from '../utils/file';
 import axios from 'axios';
 import * as fs from 'fs';
 import { Octokit } from '@octokit/rest';
-import NodeID3 from 'node-id3';
 
 async function downloadImage(url: string): Promise<Buffer | null> {
   try {
@@ -77,9 +76,13 @@ export async function downloadAlbum(albumId: string, issueNumber?: number, optio
           continue;
         }
 
+        // 获取文件格式
+        const fileExtension = availability.type || availability.url.split('.').pop()?.split('?')[0] || 'mp3';
+        console.log(`[${i + 1}/${songs.length}] 获取到音质 Quality: ${availability.quality || 'unknown'}, 比特率 Bitrate: ${availability.bitrate || 'unknown'}kbps, 格式 Format: ${fileExtension}`);
+
         const sanitizedSongName = sanitizeFileName(songName);
         const sanitizedArtistName = sanitizeFileName(artistName);
-        const fileName = `${String(i + 1).padStart(2, '0')}.${sanitizedArtistName}-${sanitizedSongName}.mp3`;
+        const fileName = `${String(i + 1).padStart(2, '0')}.${sanitizedArtistName}-${sanitizedSongName}.${fileExtension}`;
         const filePath = getDownloadPath('album', fileName, albumDirName);
         const lrcPath = getDownloadPath('album', `${String(i + 1).padStart(2, '0')}.${sanitizedArtistName}-${sanitizedSongName}.lrc`, albumDirName);
 
@@ -88,6 +91,7 @@ export async function downloadAlbum(albumId: string, issueNumber?: number, optio
         if (lyrics) {
           fs.writeFileSync(lrcPath, lyrics, 'utf8');
           console.log(`[${i + 1}/${songs.length}] 歌词下载完成 Lyrics downloaded`);
+          console.log(`[${i + 1}/${songs.length}] 网页链接 Web URL: https://music.163.com/#/song?id=${song.id}`);
         }
 
         if (fs.existsSync(filePath)) {
@@ -126,37 +130,6 @@ export async function downloadAlbum(albumId: string, issueNumber?: number, optio
         });
 
         progressBar.update(Math.round(totalLength/1024));
-
-        // 写入元数据
-        console.log(`[${i + 1}/${songs.length}] 正在写入音乐标签 Writing music tags...`);
-        const tags: NodeID3.Tags = {
-          title: song.name,
-          artist: song.artists?.map(a => a.name).join(', '),
-          album: albumName,
-          year: song.publishTime ? new Date(song.publishTime).getFullYear().toString() : undefined,
-          trackNumber: `${i + 1}/${songs.length}`,
-          performerInfo: song.artists?.map(a => a.name).join(', '),
-          length: song.duration?.toString(),
-        };
-
-        // 下载并添加封面
-        if (song.album?.picUrl) {
-          const imageBuffer = await downloadImage(song.album.picUrl);
-          if (imageBuffer) {
-            tags.image = {
-              mime: 'image/jpeg',
-              type: {
-                id: 3,
-                name: 'front cover'
-              },
-              description: 'Album cover',
-              imageBuffer
-            };
-          }
-        }
-
-        NodeID3.write(tags, filePath);
-        console.log(`[${i + 1}/${songs.length}] 音乐标签写入完成 Music tags written successfully`);
 
         downloadResults.success.push(displayName);
         i++;
