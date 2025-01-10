@@ -204,31 +204,40 @@ async function main() {
                 while (retryCount < maxRetries && !success) {
                     try {
                         // 先执行一次命令来获取歌曲信息
+                        console.log('Fetching song info...');
                         const infoOutput = execSync(`node dist/index.js download ${musicId} --auto-proxy --timeout 30000`, {
-                            stdio: 'pipe',
+                            stdio: ['pipe', 'pipe', process.stderr],
                             encoding: 'utf8',
                             timeout: 180000 // 3 minutes timeout
                         });
+                        console.log('Info output:', infoOutput);
 
                         // 尝试从输出中提取歌曲信息
-                        const songInfoMatch = infoOutput.match(/歌曲信息 Song info: (.+?) - (.+)/);
+                        const songInfoMatch = infoOutput.match(/歌曲信息 Song info: (.*?) - (.*?)(?:\n|$)/);
+                        console.log('Song info match:', songInfoMatch);
+
                         if (songInfoMatch) {
                             songName = songInfoMatch[1];
                             artistName = songInfoMatch[2];
                             // 更新进度信息
-                            await updateProgress(octokit, owner, repo, issueNumber,
-                                `🎵 正在下载 Downloading:\n` +
+                            const updateMessage = `🎵 正在下载 Downloading:\n` +
                                 `歌曲 Song: ${songName}\n` +
                                 `歌手 Artist: ${artistName}\n\n` +
-                                `⏳ 下载中 Downloading...`
-                            );
+                                `⏳ 下载中 Downloading...`;
+
+                            console.log('Updating progress with message:', updateMessage);
+                            await updateProgress(octokit, owner, repo, issueNumber, updateMessage);
 
                             // 然后再次执行命令来实际下载，这次显示进度条
+                            console.log('Starting actual download...');
                             execSync(`node dist/index.js download ${musicId} --auto-proxy --timeout 30000`, {
                                 stdio: 'inherit',
                                 timeout: 180000 // 3 minutes timeout
                             });
                             success = true;
+                        } else {
+                            console.log('Failed to match song info from output');
+                            throw new Error('Failed to extract song info');
                         }
                     } catch (error) {
                         retryCount++;
@@ -269,14 +278,19 @@ async function main() {
 
             try {
                 // 先执行一次命令来获取专辑信息
+                console.log('Fetching album info...');
                 const infoOutput = execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
-                    stdio: 'pipe',
+                    stdio: ['pipe', 'pipe', process.stderr],
                     encoding: 'utf8'
                 });
+                console.log('Info output:', infoOutput);
 
                 // 尝试从输出中提取专辑信息
-                const albumInfoMatch = infoOutput.match(/专辑信息 Album info: (.+?) - (.+)/);
+                const albumInfoMatch = infoOutput.match(/专辑信息 Album info: (.*?) - (.*?)(?:\n|$)/);
                 const songCountMatch = infoOutput.match(/共 Total: (\d+) 首歌曲 songs/);
+
+                console.log('Album info match:', albumInfoMatch);
+                console.log('Song count match:', songCountMatch);
 
                 if (albumInfoMatch) {
                     albumName = albumInfoMatch[1];
@@ -286,18 +300,22 @@ async function main() {
                     }
 
                     // 更新进度信息
-                    await updateProgress(octokit, owner, repo, issueNumber,
-                        `💿 正在下载 Downloading:\n` +
+                    const updateMessage = `💿 正在下载 Downloading:\n` +
                         `专辑 Album: ${albumName}\n` +
                         `歌手 Artist: ${artistName}\n` +
                         `歌曲数 Songs: ${songCount} 首\n\n` +
-                        `⏳ 下载中 Downloading...`
-                    );
+                        `⏳ 下载中 Downloading...`;
+
+                    console.log('Updating progress with message:', updateMessage);
+                    await updateProgress(octokit, owner, repo, issueNumber, updateMessage);
 
                     // 然后再次执行命令来实际下载，这次显示进度条
+                    console.log('Starting actual download...');
                     execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
                         stdio: 'inherit'
                     });
+                } else {
+                    console.log('Failed to match album info from output');
                 }
             } catch (error) {
                 console.error('Error during album download:', error);
