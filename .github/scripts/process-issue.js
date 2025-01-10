@@ -279,43 +279,60 @@ async function main() {
             try {
                 // 先执行一次命令来获取专辑信息
                 console.log('Fetching album info...');
-                const infoOutput = execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
-                    stdio: ['pipe', 'pipe', process.stderr],
+                const infoOutput = execSync(`node dist/index.js album ${musicId} --auto-proxy --timeout 30000 --verbose`, {
+                    stdio: ['pipe', 'pipe', 'pipe'],
                     encoding: 'utf8'
                 });
-                console.log('Info output:', infoOutput);
+                console.log('Album info output:', infoOutput);
 
-                // 尝试从输出中提取专辑信息
-                const albumInfoMatch = infoOutput.match(/专辑信息 Album info: (.*?) - (.*?)(?:\n|$)/);
-                const songCountMatch = infoOutput.match(/共 Total: (\d+) 首歌曲 songs/);
+                // 尝试从输出中提取专辑信息，使用更宽松的正则表达式
+                const albumInfoMatch = infoOutput.match(/专辑信息 Album info:[\s\n]*([^-\n]+)[\s-]*([^\n]+)/);
+                const songCountMatch = infoOutput.match(/共 Total:[\s]*(\d+)[\s]*首歌曲/);
 
                 console.log('Album info match:', albumInfoMatch);
                 console.log('Song count match:', songCountMatch);
 
                 if (albumInfoMatch) {
-                    albumName = albumInfoMatch[1];
-                    artistName = albumInfoMatch[2];
+                    albumName = albumInfoMatch[1].trim();
+                    artistName = albumInfoMatch[2].trim();
                     if (songCountMatch) {
                         songCount = parseInt(songCountMatch[1]);
                     }
 
-                    // 更新进度信息
+                    // 更新进度信息，包含更多详细信息
                     const updateMessage = `💿 正在下载 Downloading:\n` +
                         `专辑 Album: ${albumName}\n` +
                         `歌手 Artist: ${artistName}\n` +
                         `歌曲数 Songs: ${songCount} 首\n\n` +
-                        `⏳ 下载中 Downloading...`;
+                        `⏳ 下载中 Downloading...\n\n` +
+                        `详细信息 Details:\n` +
+                        `${infoOutput.split('\n').filter(line => line.trim()).join('\n')}`;
 
                     console.log('Updating progress with message:', updateMessage);
                     await updateProgress(octokit, owner, repo, issueNumber, updateMessage);
 
-                    // 然后再次执行命令来实际下载，这次显示进度条
+                    // 然后再次执行命令来实际下载，这次显示进度条和详细日志
                     console.log('Starting actual download...');
-                    execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
-                        stdio: 'inherit'
+                    const downloadProcess = execSync(`node dist/index.js album ${musicId} --auto-proxy --timeout 30000 --verbose`, {
+                        stdio: ['pipe', 'pipe', 'pipe'],
+                        encoding: 'utf8'
                     });
+
+                    // 实时更新下载进度
+                    const downloadOutput = downloadProcess.toString();
+                    console.log('Download output:', downloadOutput);
+
+                    // 更新下载进度，包含所有日志信息
+                    await updateProgress(octokit, owner, repo, issueNumber,
+                        `💿 下载进行中 Downloading in progress:\n` +
+                        `专辑 Album: ${albumName}\n` +
+                        `歌手 Artist: ${artistName}\n\n` +
+                        `详细日志 Detailed logs:\n` +
+                        `\`\`\`\n${downloadOutput}\n\`\`\``
+                    );
                 } else {
                     console.log('Failed to match album info from output');
+                    throw new Error('Failed to extract album info');
                 }
             } catch (error) {
                 console.error('Error during album download:', error);
