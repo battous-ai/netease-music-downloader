@@ -183,13 +183,37 @@ async function main() {
             return;
         }
 
+        // 获取歌曲或专辑信息
+        let initialInfo;
+        try {
+            const output = execSync(`node dist/index.js info ${type} ${musicId}`, {
+                encoding: 'utf8'
+            });
+            initialInfo = JSON.parse(output);
+        } catch (error) {
+            console.error('Error fetching initial info:', error);
+            initialInfo = null;
+        }
+
         // 添加初始状态更新
-        await updateProgress(octokit, owner, repo, issueNumber,
-            `🚀 开始处理下载请求...\nStarting to process download request...\n\n` +
-            `📥 类型 Type: ${type === 'song' ? '单曲 Single song' : '专辑 Album'}\n` +
-            `🎵 ID: ${musicId}\n\n` +
-            `⏳ 正在尝试下载，请稍候...\nTrying to download, please wait...`
-        );
+        let statusMessage = `🚀 开始处理下载请求...\nStarting to process download request...\n\n`;
+        statusMessage += `📥 类型 Type: ${type === 'song' ? '单曲 Single song' : '专辑 Album'}\n`;
+        statusMessage += `🎵 ID: ${musicId}\n`;
+
+        if (initialInfo) {
+            if (type === 'song') {
+                statusMessage += `🎵 歌曲 Song: ${initialInfo.name}\n`;
+                statusMessage += `👤 歌手 Artist: ${initialInfo.artists.join(', ')}\n`;
+            } else {
+                statusMessage += `💿 专辑 Album: ${initialInfo.name}\n`;
+                statusMessage += `👤 歌手 Artist: ${initialInfo.artist}\n`;
+                statusMessage += `📊 歌曲数 Songs: ${initialInfo.songCount} 首\n`;
+            }
+        }
+
+        statusMessage += `\n⏳ 正在尝试下载，请稍候...\nTrying to download, please wait...`;
+
+        await updateProgress(octokit, owner, repo, issueNumber, statusMessage);
 
         if (type === 'song') {
             console.log('Downloading song:', musicId);
