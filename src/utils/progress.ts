@@ -8,7 +8,9 @@ export function createMultiBar(): MultiBar {
     barCompleteChar: '█',
     barIncompleteChar: '░',
     stopOnComplete: false,
-    barsize: 30
+    barsize: 30,
+    noTTYOutput: true,
+    notTTYSchedule: 1000 // Update every second in non-TTY environments
   }, Presets.shades_classic);
 }
 
@@ -18,6 +20,8 @@ export function createSingleBar(options?: Options): SingleBar {
     barCompleteChar: '█',
     barIncompleteChar: '░',
     hideCursor: true,
+    noTTYOutput: true,
+    notTTYSchedule: 1000, // Update every second in non-TTY environments
     ...options
   });
 }
