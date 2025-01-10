@@ -213,12 +213,12 @@ async function main() {
                         console.log('Info output:', infoOutput);
 
                         // 尝试从输出中提取歌曲信息
-                        const songInfoMatch = infoOutput.match(/歌曲信息 Song info: (.*?) - (.*?)(?:\n|$)/);
+                        const songInfoMatch = infoOutput.match(/歌曲信息 Song info: ([^-\n]+)-([^\n]+)/);
                         console.log('Song info match:', songInfoMatch);
 
                         if (songInfoMatch) {
-                            songName = songInfoMatch[1];
-                            artistName = songInfoMatch[2];
+                            artistName = songInfoMatch[1].trim();
+                            songName = songInfoMatch[2].trim();
                             // 更新进度信息
                             const updateMessage = `🎵 正在下载 Downloading:\n` +
                                 `歌曲 Song: ${songName}\n` +
