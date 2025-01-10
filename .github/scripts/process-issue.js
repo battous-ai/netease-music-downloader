@@ -279,7 +279,7 @@ async function main() {
             try {
                 // 先执行一次命令来获取专辑信息
                 console.log('Fetching album info...');
-                const infoOutput = execSync(`node dist/index.js album ${musicId} --auto-proxy --verbose`, {
+                const infoOutput = execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
                     stdio: ['pipe', 'pipe', 'pipe'],
                     encoding: 'utf8',
                     timeout: 180000 // 3 minutes timeout for the process itself
@@ -312,25 +312,19 @@ async function main() {
                     console.log('Updating progress with message:', updateMessage);
                     await updateProgress(octokit, owner, repo, issueNumber, updateMessage);
 
-                    // 然后再次执行命令来实际下载，这次显示进度条和详细日志
+                    // 然后再次执行命令来实际下载，这次使用 inherit 来显示实时进度
                     console.log('Starting actual download...');
-                    const downloadProcess = execSync(`node dist/index.js album ${musicId} --auto-proxy --verbose`, {
-                        stdio: ['pipe', 'pipe', 'pipe'],
-                        encoding: 'utf8',
+                    execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
+                        stdio: 'inherit',
                         timeout: 180000 // 3 minutes timeout for the process itself
                     });
 
-                    // 实时更新下载进度
-                    const downloadOutput = downloadProcess.toString();
-                    console.log('Download output:', downloadOutput);
-
-                    // 更新下载进度，包含所有日志信息
+                    // 下载完成后更新状态
                     await updateProgress(octokit, owner, repo, issueNumber,
                         `💿 下载进行中 Downloading in progress:\n` +
                         `专辑 Album: ${albumName}\n` +
                         `歌手 Artist: ${artistName}\n\n` +
-                        `详细日志 Detailed logs:\n` +
-                        `\`\`\`\n${downloadOutput}\n\`\`\``
+                        `✅ 下载完成 Download completed!`
                     );
                 } else {
                     console.log('Failed to match album info from output');
