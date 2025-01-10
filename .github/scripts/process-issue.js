@@ -279,9 +279,10 @@ async function main() {
             try {
                 // 先执行一次命令来获取专辑信息
                 console.log('Fetching album info...');
-                const infoOutput = execSync(`node dist/index.js album ${musicId} --auto-proxy --timeout 30000 --verbose`, {
+                const infoOutput = execSync(`node dist/index.js album ${musicId} --auto-proxy --verbose`, {
                     stdio: ['pipe', 'pipe', 'pipe'],
-                    encoding: 'utf8'
+                    encoding: 'utf8',
+                    timeout: 180000 // 3 minutes timeout for the process itself
                 });
                 console.log('Album info output:', infoOutput);
 
@@ -313,9 +314,10 @@ async function main() {
 
                     // 然后再次执行命令来实际下载，这次显示进度条和详细日志
                     console.log('Starting actual download...');
-                    const downloadProcess = execSync(`node dist/index.js album ${musicId} --auto-proxy --timeout 30000 --verbose`, {
+                    const downloadProcess = execSync(`node dist/index.js album ${musicId} --auto-proxy --verbose`, {
                         stdio: ['pipe', 'pipe', 'pipe'],
-                        encoding: 'utf8'
+                        encoding: 'utf8',
+                        timeout: 180000 // 3 minutes timeout for the process itself
                     });
 
                     // 实时更新下载进度
