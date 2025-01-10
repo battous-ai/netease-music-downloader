@@ -17,6 +17,7 @@ A simple and easy-to-use tool for downloading music from NetEase Cloud Music. Su
 - 🔍 Auto-detect unavailable or copyright-protected songs
 - 📝 Auto-download lyrics (if available)
 - 🌐 Support proxy configuration
+- 🔄 Smart connection handling (try direct connection first, then use proxy if needed)
 
 ## Usage
 
@@ -42,7 +43,10 @@ npx netease-music-downloader download 426832090
 # Download an album
 npx netease-music-downloader album 34836039
 
-# Download with proxy
+# Download with auto proxy (recommended)
+npx netease-music-downloader download 426832090 --auto-proxy
+
+# Download with manual proxy
 npx netease-music-downloader download 426832090 --proxy http://127.0.0.1:7890
 ```
 
@@ -64,7 +68,10 @@ pnpm install
 pnpm start download 426832090  # Download a song
 pnpm start album 34836039     # Download an album
 
-# Run with proxy
+# Run with auto proxy (recommended)
+pnpm start download 426832090 --auto-proxy
+
+# Run with manual proxy
 pnpm start download 426832090 --proxy http://127.0.0.1:7890
 ```
 
@@ -92,7 +99,26 @@ downloads/
 
 ## Using Proxy
 
-If you're having trouble accessing NetEase Music directly, you can use a proxy:
+If you're having trouble accessing NetEase Music directly, you can use a proxy in two ways:
+
+### 1. Auto Proxy (Recommended)
+
+The program will first try direct connection, and if that fails, it will automatically find and use an available Chinese proxy:
+
+```bash
+# Format
+pnpm start download <song_id> --auto-proxy
+
+# Example with song download
+pnpm start download 426832090 --auto-proxy
+
+# Example with album download
+pnpm start album 34836039 --auto-proxy
+```
+
+### 2. Manual Proxy
+
+If you have your own proxy server, you can specify it directly:
 
 ```bash
 # Format
@@ -105,7 +131,7 @@ pnpm start download 426832090 --proxy http://127.0.0.1:7890
 pnpm start album 34836039 --proxy http://127.0.0.1:7890
 ```
 
-Note: When using a proxy, prefer using `http://` instead of `https://` for the proxy URL, as some proxy servers may not properly support HTTPS connections.
+Note: When using a manual proxy, prefer using `http://` instead of `https://` for the proxy URL, as some proxy servers may not properly support HTTPS connections.
 
 ## Notes
 

@@ -15,6 +15,7 @@
 - 🔍 自动检测下架或无版权歌曲
 - 📝 自动下载歌词（如果有）
 - 🌐 支持代理配置
+- 🔄 智能连接处理（优先尝试直连，失败后使用代理）
 
 ## 使用方法
 
@@ -40,7 +41,10 @@ npx netease-music-downloader download 426832090
 # 下载专辑
 npx netease-music-downloader album 34836039
 
-# 使用代理下载
+# 使用自动代理下载（推荐）
+npx netease-music-downloader download 426832090 --auto-proxy
+
+# 使用手动代理下载
 npx netease-music-downloader download 426832090 --proxy http://127.0.0.1:7890
 ```
 
@@ -62,7 +66,10 @@ pnpm install
 pnpm start download 426832090  # 下载单曲
 pnpm start album 34836039     # 下载专辑
 
-# 使用代理运行
+# 使用自动代理运行（推荐）
+pnpm start download 426832090 --auto-proxy
+
+# 使用手动代理运行
 pnpm start download 426832090 --proxy http://127.0.0.1:7890
 ```
 
@@ -90,7 +97,26 @@ downloads/
 
 ## 使用代理
 
-如果无法直接访问网易云音乐，可以使用代理：
+如果无法直接访问网易云音乐，可以通过以下两种方式使用代理：
+
+### 1. 自动代理（推荐）
+
+程序会先尝试直连下载，如果失败则自动寻找并使用可用的中国代理：
+
+```bash
+# 格式
+pnpm start download <歌曲ID> --auto-proxy
+
+# 下载单曲示例
+pnpm start download 426832090 --auto-proxy
+
+# 下载专辑示例
+pnpm start album 34836039 --auto-proxy
+```
+
+### 2. 手动代理
+
+如果你有自己的代理服务器，可以直接指定：
 
 ```bash
 # 格式
@@ -103,7 +129,7 @@ pnpm start download 426832090 --proxy http://127.0.0.1:7890
 pnpm start album 34836039 --proxy http://127.0.0.1:7890
 ```
 
-注意：使用代理时，建议使用 `http://` 而不是 `https://` 作为代理地址的协议，因为某些代理服务器可能不能正确支持 HTTPS 连接。
+注意：使用手动代理时，建议使用 `http://` 而不是 `https://` 作为代理地址的协议，因为某些代理服务器可能不能正确支持 HTTPS 连接。
 
 ## 注意事项
 
