@@ -24,10 +24,10 @@ class ProxyManager {
       url: 'https://www.kuaidaili.com/free/inha/',
       type: 'kuaidaili'
     },
-    {
-      url: 'http://www.89ip.cn/index_1.html',
-      type: '89ip'
-    },
+    // {
+    //   url: 'http://www.89ip.cn/index_1.html',
+    //   type: '89ip'
+    // },
     {
       url: 'https://proxy.ip3366.net/free/',
       type: 'ip3366'
