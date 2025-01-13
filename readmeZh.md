@@ -1,6 +1,6 @@
 # 网易云音乐下载器
 
-**本仓库绝大部分代码是由AI编写开发。**
+**本仓库绝大部分代码是由 AI 编写开发。**
 
 一个简单易用的网易云音乐下载工具，支持单曲和专辑下载。提供多种使用方式，满足不同场景的需求。
 
@@ -19,18 +19,7 @@
 
 ## 使用方法
 
-### 1. 通过 GitHub Issue 下载（推荐）
-
-最简单的使用方式，无需安装任何工具。程序会优先尝试直连下载，如果直连失败（由于 GitHub Actions 服务器在海外，这种情况可能会发生），会自动使用代理确保下载成功：
-
-1. 访问 [Issues 页面](https://github.com/Gaohaoyang/netease-music-downloader/issues)
-2. 点击 "New Issue"
-3. 选择 "下载音乐" 模板
-4. 填写下载类型（单曲/专辑）和音乐ID
-5. 提交 issue 后会自动开始下载
-6. 下载完成后会在 issue 中提供下载链接
-
-### 2. 通过 npx 使用
+### 1. 通过 npx 使用 （推荐）
 
 无需安装，直接运行：
 
@@ -47,6 +36,17 @@ npx netease-music-downloader download 426832090 --auto-proxy
 # 使用手动代理下载
 npx netease-music-downloader download 426832090 --proxy http://127.0.0.1:7890
 ```
+
+### 2. 通过 GitHub Issue 下载
+
+最简单的使用方式，无需安装任何工具。程序会优先尝试直连下载，如果直连失败（由于 GitHub Actions 服务器在海外，这种情况可能会发生），会自动使用代理确保下载成功：
+
+1. 访问 [Issues 页面](https://github.com/Gaohaoyang/netease-music-downloader/issues)
+2. 点击 "New Issue"
+3. 选择 "下载音乐" 模板
+4. 填写下载类型（单曲/专辑）和音乐 ID
+5. 提交 issue 后会自动开始下载
+6. 下载完成后会在 issue 中提供下载链接
 
 ### 3. 本地开发运行
 
@@ -73,11 +73,11 @@ pnpm start download 426832090 --auto-proxy
 pnpm start download 426832090 --proxy http://127.0.0.1:7890
 ```
 
-## 如何获取音乐ID？
+## 如何获取音乐 ID？
 
 1. 打开网易云音乐网页版或客户端
 2. 找到想要下载的歌曲或专辑
-3. 复制链接，从链接中获取ID：
+3. 复制链接，从链接中获取 ID：
    - 单曲链接：`https://music.163.com/#/song?id=426832090` 中的 `426832090`
    - 专辑链接：`https://music.163.com/#/album?id=34836039` 中的 `34836039`
 
@@ -145,4 +145,3 @@ pnpm start album 34836039 --proxy http://127.0.0.1:7890
 ## License
 
 MIT
-

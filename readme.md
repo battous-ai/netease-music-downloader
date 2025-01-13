@@ -21,18 +21,7 @@ A simple and easy-to-use tool for downloading music from NetEase Cloud Music. Su
 
 ## Usage
 
-### 1. Download via GitHub Issue (Recommended)
-
-The easiest way to use, no installation required. The program will first try a direct connection, and if that fails (which may happen as the GitHub Actions server is located overseas), it will automatically use a proxy to ensure successful downloads:
-
-1. Visit [Issues page](https://github.com/Gaohaoyang/netease-music-downloader/issues)
-2. Click "New Issue"
-3. Choose "Download Music" template
-4. Fill in the type (song/album) and music ID
-5. Submit the issue and download will start automatically
-6. Download links will be provided in the issue comments
-
-### 2. Use via npx
+### 1. Use via npx (Recommended)
 
 No installation needed, run directly:
 
@@ -49,6 +38,17 @@ npx netease-music-downloader download 426832090 --auto-proxy
 # Download with manual proxy
 npx netease-music-downloader download 426832090 --proxy http://127.0.0.1:7890
 ```
+
+### 2. Download via GitHub Issue
+
+The easiest way to use, no installation required. The program will first try a direct connection, and if that fails (which may happen as the GitHub Actions server is located overseas), it will automatically use a proxy to ensure successful downloads:
+
+1. Visit [Issues page](https://github.com/Gaohaoyang/netease-music-downloader/issues)
+2. Click "New Issue"
+3. Choose "Download Music" template
+4. Fill in the type (song/album) and music ID
+5. Submit the issue and download will start automatically
+6. Download links will be provided in the issue comments
 
 ### 3. Local Development
 
