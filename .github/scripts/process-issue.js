@@ -362,7 +362,7 @@ async function main() {
             }
 
             // 从文件系统中获取下载的文件信息
-            const downloadedFiles = glob.sync('downloads/**/*.{mp3,lrc}');
+            const downloadedFiles = glob.sync('downloads/**/*.{mp3,m4a,flac,wav,lrc}');
             if (downloadedFiles.length === 0) {
                 await updateProgress(octokit, owner, repo, issueNumber,
                     `❌ 下载失败：未能成功下载任何文件。\n可能原因：所有歌曲都没有版权或已下架。\n\nDownload failed: No files were downloaded successfully.\nPossible reason: All songs are unavailable or have no copyright.`);
@@ -370,28 +370,28 @@ async function main() {
             }
 
             // 获取专辑信息
-            const mp3Files = downloadedFiles.filter(file => file.endsWith('.mp3'));
-            if (mp3Files.length > 0) {
-                const filePath = mp3Files[0];
+            const audioFiles = downloadedFiles.filter(file => /\.(mp3|m4a|flac|wav)$/i.test(file));
+            if (audioFiles.length > 0) {
+                const filePath = audioFiles[0];
                 const albumDir = path.dirname(filePath);
                 albumInfo = path.basename(albumDir);
             }
         }
 
         // 检查下载结果并准备打包
-        const allFiles = glob.sync('downloads/**/*.{mp3,lrc}');
-        const mp3Files = allFiles.filter(file => file.endsWith('.mp3'));
+        const allFiles = glob.sync('downloads/**/*.{mp3,m4a,flac,wav,lrc}');
+        const audioFiles = allFiles.filter(file => /\.(mp3|m4a|flac|wav)$/i.test(file));
         const lrcFiles = allFiles.filter(file => file.endsWith('.lrc'));
 
         // 如果没有成功下载任何音乐文件，直接发送消息并退出
-        if (mp3Files.length === 0) {
+        if (audioFiles.length === 0) {
             await updateProgress(octokit, owner, repo, issueNumber,
                 `❌ 下载失败：未能成功下载任何音乐文件。\n可能原因：所有歌曲都没有版权或已下架。\n\nDownload failed: No music files were downloaded successfully.\nPossible reason: All songs are unavailable or have no copyright.`);
             return;
         }
 
         await updateProgress(octokit, owner, repo, issueNumber,
-            `✅ 下载完成 Download completed，共 Total: ${mp3Files.length} 首歌曲 songs，${lrcFiles.length} 个歌词文件 lyrics\n` +
+            `✅ 下载完成 Download completed，共 Total: ${audioFiles.length} 首歌曲 songs，${lrcFiles.length} 个歌词文件 lyrics\n` +
             `📦 ${type === 'song' ? `歌曲 Song：${songInfo}` : `专辑 Album：${albumInfo}`}\n` +
             `⏳ 正在打包并上传到 Release Packaging and uploading to Release...`
         );
