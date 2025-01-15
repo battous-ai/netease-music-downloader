@@ -96,6 +96,7 @@ export async function downloadAlbum(albumId: string, issueNumber?: number, optio
 
         if (fs.existsSync(filePath)) {
           console.log(`\n[${i + 1}/${songs.length}] ${fileName} (文件已存在，跳过下载 File exists, skipping download)`);
+          downloadResults.skipped.push(displayName);
           i++;
           continue;
         }
