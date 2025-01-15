@@ -124,9 +124,9 @@ export async function downloadAlbum(albumId: string, issueNumber?: number, optio
 
         response.data.pipe(writer);
 
-        await new Promise((resolve, reject) => {
-          writer.on('finish', resolve);
-          writer.on('error', reject);
+        await new Promise<void>((resolve, reject) => {
+          writer.on('finish', () => resolve());
+          writer.on('error', (err) => reject(err));
         });
 
         progressBar.update(Math.round(totalLength/1024));
