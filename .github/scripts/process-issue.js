@@ -273,13 +273,17 @@ async function main() {
                 }
 
                 // 从文件系统中获取下载的文件信息
-                const downloadedFiles = glob.sync('downloads/**/*.mp3');
-                if (downloadedFiles.length > 0) {
-                    const filePath = downloadedFiles[0];
-                    songInfo = path.basename(filePath, '.mp3');
+                const downloadedFiles = glob.sync('downloads/**/*.{mp3,m4a,flac,wav,lrc}');
+                const audioFiles = downloadedFiles.filter(file => /\.(mp3|m4a|flac|wav)$/i.test(file));
+                const lrcFiles = downloadedFiles.filter(file => file.endsWith('.lrc'));
+
+                if (audioFiles.length > 0) {
+                    const filePath = audioFiles[0];
+                    const ext = path.extname(filePath);
+                    songInfo = path.basename(filePath, ext);
                 }
 
-                if (downloadedFiles.length === 0) {
+                if (audioFiles.length === 0) {
                     await octokit.issues.createComment({
                         owner,
                         repo,
