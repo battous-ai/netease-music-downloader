@@ -140,7 +140,7 @@ Note: When using a manual proxy, prefer using `http://` instead of `https://` fo
 - For personal learning use only
 - Please comply with relevant laws and regulations
 - Some music may be unavailable due to copyright restrictions
-- Downloaded music files will be automatically cleaned up after 3 hours
+- Downloaded music files will be automatically cleaned up after 48 hours
 - Stable network connection required
 - Special characters in filenames will be automatically removed
 

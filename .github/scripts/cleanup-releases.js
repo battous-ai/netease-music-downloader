@@ -15,15 +15,15 @@ async function cleanupReleases() {
             per_page: 100
         });
 
-        const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
+        const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
 
-        // 筛选出超过3小时的 releases
+        // 筛选出超过48小时的 releases
         const oldReleases = releases.filter(release => {
             const releaseDate = new Date(release.created_at);
-            return releaseDate < threeHoursAgo;
+            return releaseDate < fortyEightHoursAgo;
         });
 
-        console.log(`Found ${oldReleases.length} releases older than 3 hours`);
+        console.log(`Found ${oldReleases.length} releases older than 48 hours`);
 
         // 删除旧的 releases
         for (const release of oldReleases) {

@@ -2,7 +2,7 @@ name: Cleanup Old Releases
 
 on:
   schedule:
-    - cron: '0 */3 * * *' # 每3小时运行一次
+    - cron: '0 0 */2 * *' # 每48小时运行一次
   workflow_dispatch: # 添加手动触发功能
 
 jobs:
