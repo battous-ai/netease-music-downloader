@@ -27,6 +27,15 @@ body:
       pattern: ^\d+$
 
   - type: checkboxes
+    id: download_options
+    attributes:
+      label: Download Options 下载选项
+      description: Choose what to download 选择要下载的内容
+      options:
+        - label: Lyrics only (no music file) 仅下载歌词（不下载音乐文件）
+          required: false
+
+  - type: checkboxes
     id: terms
     attributes:
       label: Terms of Use 使用须知

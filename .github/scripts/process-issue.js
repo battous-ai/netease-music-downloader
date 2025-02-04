@@ -179,8 +179,10 @@ async function main() {
         // 使用新的正则表达式匹配
         const typeMatch = body.match(/### Download Type 下载类型\s*\n\n(.+?)(?=\n|$)/);
         const idMatch = body.match(/### Music ID 音乐ID\s*\n\n(.+?)(?=\n|$)/);
+        const lyricsOnlyMatch = body.match(/### Download Options 下载选项\s*\n\n- \[(x|X)\] Lyrics only/);
         console.log('Type match:', typeMatch);
         console.log('ID match:', idMatch);
+        console.log('Lyrics only match:', lyricsOnlyMatch);
 
         if (!typeMatch || !idMatch) {
             await updateProgress(octokit, owner, repo, issueNumber,
@@ -191,6 +193,7 @@ async function main() {
         // 修改类型判断逻辑
         const type = typeMatch[1].trim().startsWith('Single Song') ? 'song' : 'album';
         const musicId = idMatch[1].trim();
+        const lyricsOnly = !!lyricsOnlyMatch;
 
         // 定义变量
         let songInfo = 'Unknown';
@@ -198,6 +201,7 @@ async function main() {
 
         console.log('Parsed type:', type);
         console.log('Parsed musicId:', musicId);
+        console.log('Lyrics only:', lyricsOnly);
 
         if (!musicId || !/^\d+$/.test(musicId)) {
             await updateProgress(octokit, owner, repo, issueNumber,
@@ -208,7 +212,8 @@ async function main() {
         // 添加初始状态更新
         let statusMessage = `🚀 开始处理下载请求...\nStarting to process download request...\n\n`;
         statusMessage += `📥 类型 Type: ${type === 'song' ? '单曲 Single song' : '专辑 Album'}\n`;
-        statusMessage += `🎵 ID: ${musicId}\n\n`;
+        statusMessage += `🎵 ID: ${musicId}\n`;
+        statusMessage += `📝 仅下载歌词 Lyrics only: ${lyricsOnly ? '是 Yes' : '否 No'}\n\n`;
         statusMessage += `⏳ 正在尝试下载，请稍候...\nTrying to download, please wait...`;
 
         await updateProgress(octokit, owner, repo, issueNumber, statusMessage);
@@ -225,9 +230,13 @@ async function main() {
 
                 while (retryCount < maxRetries && !success) {
                     try {
-                        // 先执行一次命令来获取歌曲信息
-                        console.log('Fetching song info...');
-                        const infoOutput = execSync(`node dist/index.js download ${musicId} --auto-proxy`, {
+                        // 根据是否仅下载歌词选择命令
+                        const command = lyricsOnly ?
+                            `node dist/index.js lyrics ${musicId} --auto-proxy` :
+                            `node dist/index.js download ${musicId} --auto-proxy`;
+
+                        console.log('Executing command:', command);
+                        const infoOutput = execSync(command, {
                             stdio: ['pipe', 'pipe', 'pipe'],
                             encoding: 'utf8',
                             timeout: 180000 // 3 minutes timeout for the process itself
@@ -252,7 +261,7 @@ async function main() {
 
                             // 然后再次执行命令来实际下载，这次显示进度条
                             console.log('Starting actual download...');
-                            execSync(`node dist/index.js download ${musicId} --auto-proxy`, {
+                            execSync(command, {
                                 stdio: 'inherit',
                                 timeout: 180000 // 3 minutes timeout for the process itself
                             });
@@ -303,12 +312,15 @@ async function main() {
             let songCount = 0;
 
             try {
-                // 先执行一次命令来获取专辑信息
-                console.log('Fetching album info...');
-                const infoOutput = execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
-                    stdio: 'inherit', // 使用 inherit 来显示所有输出
-                    encoding: 'utf8',
-                    timeout: 180000 // 3 minutes timeout for the process itself
+                // 根据是否仅下载歌词选择命令
+                const command = lyricsOnly ?
+                    `node dist/index.js album-lyrics ${musicId} --auto-proxy` :
+                    `node dist/index.js album ${musicId} --auto-proxy`;
+
+                console.log('Executing command:', command);
+                execSync(command, {
+                    stdio: 'inherit',
+                    timeout: 600000 // 10 minutes timeout for albums
                 });
 
                 // 再次执行命令来获取专辑信息用于解析
@@ -341,13 +353,6 @@ async function main() {
 
                     console.log('Updating progress with message:', updateMessage);
                     await updateProgress(octokit, owner, repo, issueNumber, updateMessage);
-
-                    // 然后再次执行命令来实际下载，使用 inherit 来显示实时进度
-                    console.log('Starting actual download...');
-                    execSync(`node dist/index.js album ${musicId} --auto-proxy`, {
-                        stdio: 'inherit', // 使用 inherit 来显示所有输出
-                        timeout: 180000 // 3 minutes timeout for the process itself
-                    });
 
                     // 下载完成后更新状态
                     await updateProgress(octokit, owner, repo, issueNumber,
