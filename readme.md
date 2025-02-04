@@ -18,6 +18,7 @@ A simple and easy-to-use tool for downloading music from NetEase Cloud Music. Su
 - 📝 Auto-download lyrics (if available)
 - 🌐 Support proxy configuration
 - 🔄 Smart connection handling (try direct connection first, then use proxy if needed)
+- 📜 Support lyrics-only downloads (without music files)
 
 ## Usage
 
@@ -31,6 +32,12 @@ npx netease-music-downloader download 426832090
 
 # Download an album
 npx netease-music-downloader album 34836039
+
+# Download lyrics only for a song
+npx netease-music-downloader lyrics 426832090
+
+# Download lyrics only for an album
+npx netease-music-downloader album-lyrics 34836039
 
 # Download with auto proxy (recommended)
 npx netease-music-downloader download 426832090 --auto-proxy
@@ -46,7 +53,10 @@ The easiest way to use, no installation required. The program will first try a d
 1. Visit [Issues page](https://github.com/Gaohaoyang/netease-music-downloader/issues)
 2. Click "New Issue"
 3. Choose "Download Music" template
-4. Fill in the type (song/album) and music ID
+4. Fill in:
+   - Type (song/album)
+   - Music ID
+   - Check "Lyrics only" if you only want to download lyrics
 5. Submit the issue and download will start automatically
 6. Download links will be provided in the issue comments
 
@@ -67,6 +77,8 @@ pnpm install
 # Run commands
 pnpm start download 426832090  # Download a song
 pnpm start album 34836039     # Download an album
+pnpm start lyrics 426832090   # Download lyrics only for a song
+pnpm start album-lyrics 34836039  # Download lyrics only for an album
 
 # Run with auto proxy (recommended)
 pnpm start download 426832090 --auto-proxy

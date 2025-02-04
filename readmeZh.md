@@ -16,6 +16,7 @@
 - 📝 自动下载歌词（如果有）
 - 🌐 支持代理配置
 - 🔄 智能连接处理（优先尝试直连，失败后使用代理）
+- 📜 支持仅下载歌词（不下载音乐文件）
 
 ## 使用方法
 
@@ -29,6 +30,12 @@ npx netease-music-downloader download 426832090
 
 # 下载专辑
 npx netease-music-downloader album 34836039
+
+# 仅下载单曲歌词
+npx netease-music-downloader lyrics 426832090
+
+# 仅下载专辑歌词
+npx netease-music-downloader album-lyrics 34836039
 
 # 使用自动代理下载（推荐）
 npx netease-music-downloader download 426832090 --auto-proxy
@@ -44,7 +51,10 @@ npx netease-music-downloader download 426832090 --proxy http://127.0.0.1:7890
 1. 访问 [Issues 页面](https://github.com/Gaohaoyang/netease-music-downloader/issues)
 2. 点击 "New Issue"
 3. 选择 "下载音乐" 模板
-4. 填写下载类型（单曲/专辑）和音乐 ID
+4. 填写：
+   - 下载类型（单曲/专辑）
+   - 音乐 ID
+   - 如果只想下载歌词，勾选"仅下载歌词"选项
 5. 提交 issue 后会自动开始下载
 6. 下载完成后会在 issue 中提供下载链接
 
@@ -65,6 +75,8 @@ pnpm install
 # 运行命令
 pnpm start download 426832090  # 下载单曲
 pnpm start album 34836039     # 下载专辑
+pnpm start lyrics 426832090   # 仅下载单曲歌词
+pnpm start album-lyrics 34836039  # 仅下载专辑歌词
 
 # 使用自动代理运行（推荐）
 pnpm start download 426832090 --auto-proxy
