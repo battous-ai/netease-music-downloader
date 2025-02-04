@@ -3,6 +3,7 @@
 import { program } from 'commander';
 import { downloadSong } from './commands/download';
 import { downloadAlbum } from './commands/album';
+import { downloadSongLyrics, downloadAlbumLyrics } from './commands/lyrics';
 import { setProxy } from './services/netease';
 import { getAutoProxy } from './services/proxy';
 import * as fs from 'fs';
@@ -63,6 +64,51 @@ program
   .argument('<albumId>', '专辑ID或URL Album ID or URL')
   .action(async (albumId: string) => {
     await downloadAlbum(albumId, undefined, { autoProxy: program.opts().autoProxy });
+  });
+
+program
+  .command('lyrics')
+  .description('下载单个或多个音乐的歌词 Download lyrics for single or multiple songs')
+  .argument('[ids...]', '音乐ID列表 List of music IDs')
+  .option('-f, --file <file>', '从文件读取ID列表 Read ID list from file')
+  .action(async (ids: string[], options: { file?: string }) => {
+    let musicIds = ids || [];
+
+    if (options.file) {
+      try {
+        const fileContent = fs.readFileSync(options.file, 'utf8');
+        const fileIds = fileContent.split('\n')
+          .map(line => line.trim())
+          .filter(line => line && !line.startsWith('#'));
+        musicIds = [...musicIds, ...fileIds];
+      } catch (error) {
+        console.error('读取文件失败 Failed to read file:', error);
+        process.exit(1);
+      }
+    }
+
+    musicIds = [...new Set(musicIds)];
+
+    if (musicIds.length === 0) {
+      console.error('请提供音乐ID Please provide music ID(s)');
+      process.exit(1);
+    }
+
+    console.log(`准备下载 Preparing to download lyrics for ${musicIds.length} 首歌曲 songs`);
+
+    for (const id of musicIds) {
+      await downloadSongLyrics(id);
+    }
+
+    console.log('\n所有歌词下载任务完成！All lyrics download tasks completed!');
+  });
+
+program
+  .command('album-lyrics')
+  .description('下载整张专辑的歌词 Download lyrics for full album')
+  .argument('<albumId>', '专辑ID或URL Album ID or URL')
+  .action(async (albumId: string) => {
+    await downloadAlbumLyrics(albumId);
   });
 
 program.parse();
