@@ -46,6 +46,7 @@ npx netease-music-downloader download 426832090 --auto-proxy
 npx netease-music-downloader download 426832090 --proxy http://127.0.0.1:7890
 ```
 
+<!--
 ### 2. Download via GitHub Issue
 
 The easiest way to use, no installation required. The program will first try a direct connection, and if that fails (which may happen as the GitHub Actions server is located overseas), it will automatically use a proxy to ensure successful downloads:
@@ -59,8 +60,9 @@ The easiest way to use, no installation required. The program will first try a d
    - Check "Lyrics only" if you only want to download lyrics
 5. Submit the issue and download will start automatically
 6. Download links will be provided in the issue comments
+-->
 
-### 3. Local Development
+### 2. Local Development
 
 For local development:
 

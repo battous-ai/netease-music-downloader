@@ -44,6 +44,7 @@ npx netease-music-downloader download 426832090 --auto-proxy
 npx netease-music-downloader download 426832090 --proxy http://127.0.0.1:7890
 ```
 
+<!--
 ### 2. 通过 GitHub Issue 下载
 
 最简单的使用方式，无需安装任何工具。程序会优先尝试直连下载，如果直连失败（由于 GitHub Actions 服务器在海外，这种情况可能会发生），会自动使用代理确保下载成功：
@@ -57,8 +58,9 @@ npx netease-music-downloader download 426832090 --proxy http://127.0.0.1:7890
    - 如果只想下载歌词，勾选"仅下载歌词"选项
 5. 提交 issue 后会自动开始下载
 6. 下载完成后会在 issue 中提供下载链接
+-->
 
-### 3. 本地开发运行
+### 2. 本地开发运行
 
 如果需要进行本地开发：
 
