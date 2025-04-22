@@ -2,7 +2,7 @@
 
 import { program } from 'commander';
 import { downloadSong } from './commands/download';
-import { downloadAlbum } from './commands/album';
+import { downloadAlbum, downloadPlaylist } from './commands/album';
 import { downloadSongLyrics, downloadAlbumLyrics } from './commands/lyrics';
 import { setProxy } from './services/netease';
 import { getAutoProxy } from './services/proxy';
@@ -65,6 +65,16 @@ program
   .action(async (albumId: string) => {
     await downloadAlbum(albumId, undefined, { autoProxy: program.opts().autoProxy });
   });
+
+program
+  .command('playlist')
+  .description('下载整张歌单 Download full playlist')
+  .argument('<playlistId>', '歌单ID或URL Playlist ID or URL')
+  .action(async (playlistId: string) => {
+    await downloadPlaylist(playlistId, undefined, { autoProxy: program.opts().autoProxy });
+  });
+
+
 
 program
   .command('lyrics')

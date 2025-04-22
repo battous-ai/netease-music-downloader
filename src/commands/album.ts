@@ -1,9 +1,10 @@
 import { createMultiBar } from '../utils/progress';
-import { getAlbumInfo, checkSongAvailabilityWithRetry, getLyrics, proxyConfig } from '../services/netease';
+import { getAlbumInfo, getPlaylistInfo, checkSongAvailabilityWithRetry, getLyrics, proxyConfig } from '../services/netease';
 import { sanitizeFileName, getDownloadPath } from '../utils/file';
 import axios from 'axios';
 import * as fs from 'fs';
 import { Octokit } from '@octokit/rest';
+import { downloadSong } from './download';
 
 async function downloadImage(url: string): Promise<Buffer | null> {
   try {
@@ -246,6 +247,70 @@ export async function downloadAlbum(albumId: string, issueNumber?: number, optio
 
     // 在控制台显示详细错误，但不要让它显示在 issue 中
     console.error('专辑下载失败，可能是因为版权限制或资源不可用。');
+    if (error instanceof Error) {
+      console.error('详细错误:', error.message);
+    }
+
+    process.exit(1);
+  }
+}
+
+export async function downloadPlaylist(playlistId: string, issueNumber?: number, options?: { autoProxy?: boolean }): Promise<void> {
+  try {
+    // 从URL中提取ID Extract ID from URL
+    if (playlistId.includes('music.163.com')) {
+      const match = playlistId.match(/id=(\d+)/);
+      if (!match) {
+        console.error('无效的歌单URL Invalid playlist URL');
+        process.exit(1);
+      }
+      playlistId = match[1];
+    }
+
+    let playlistInfo;
+    try {
+      playlistInfo = await getPlaylistInfo(playlistId);
+    } catch (error) {
+      console.error('\n获取歌单信息失败，可能是网络问题或代理服务器无响应\nFailed to get playlist info, might be network issue or proxy server not responding');
+      if (error instanceof Error) {
+        console.error('详细错误 Detailed error:', error.message);
+      }
+      process.exit(1);
+    }
+
+    for (const id of playlistInfo) {
+      await downloadSong(id, undefined, { autoProxy: options?.autoProxy });
+    }
+  } catch (error) {
+    if (issueNumber && !isNaN(Number(issueNumber))) {
+      try {
+        const octokit = new Octokit({
+          auth: process.env.GITHUB_TOKEN,
+        });
+
+        // 只发送简单的错误消息
+        await octokit.issues.createComment({
+          owner: 'Gaohaoyang',
+          repo: 'netease-music-downloader',
+          issue_number: Number(issueNumber),
+          body: '❌ 歌单下载失败，可能是因为版权限制或资源不可用。'
+        });
+
+        // 关闭 issue
+        await octokit.issues.update({
+          owner: 'Gaohaoyang',
+          repo: 'netease-music-downloader',
+          issue_number: Number(issueNumber),
+          state: 'closed'
+        });
+      } catch (apiError) {
+        // 只在控制台记录 API 错误，不要让它显示在 issue 中
+        console.error('GitHub API 调用失败:', apiError);
+      }
+    }
+
+    // 在控制台显示详细错误，但不要让它显示在 issue 中
+    console.error('歌单下载失败，可能是因为版权限制或资源不可用。');
     if (error instanceof Error) {
       console.error('详细错误:', error.message);
     }

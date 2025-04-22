@@ -212,6 +212,49 @@ export async function getAlbumInfo(albumId: string): Promise<AlbumInfo> {
   }
 }
 
+export async function getPlaylistInfo(playlistId: string): Promise<string[]> {
+  try {
+    const url = '/api/v3/playlist/detail';
+    const data = {
+      id: playlistId,
+      n: 1000,
+      header: {
+        os: 'iOS',
+        appver: '2.5.1',
+        deviceId: randomBytes(8).toString('hex').toUpperCase(),
+      }
+    };
+
+    const { params } = eapi(url, data);
+    const response = await axios.post(
+      'https://interface3.music.163.com/eapi/v3/playlist/detail',
+      new URLSearchParams({
+        params
+      }).toString(),
+      {
+        headers: {
+          ...headers,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'NeteaseMusic/2.5.1 (iPhone; iOS 16.6; Scale/3.00)'
+        }
+      }
+    );
+
+    if (response.data?.code !== 200) {
+      throw new Error(`API 返回错误 API returned error: ${response.data?.message || 'Unknown error'}`);
+    }
+
+    const songIds = response.data.privileges?.map((privilege: any) => privilege.id.toString()) || [];
+    console.log(`从歌单中提取了 ${songIds.length} 首歌曲ID Extracted ${songIds.length} song IDs from playlist`);
+
+    return songIds;
+  } catch (error) {
+    console.error('获取专辑信息失败 Failed to get album info:', error instanceof Error ? error.message : 'Unknown error');
+    return [];
+  }
+}
+
+
 async function getSongUrl(id: string, level: string): Promise<string | null> {
   try {
     const url = '/api/song/enhance/player/url/v1';
