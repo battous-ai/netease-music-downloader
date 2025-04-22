@@ -19,3 +19,15 @@ export interface AlbumInfo {
   picUrl?: string;
   publishTime?: number;
 }
+
+export interface TrackInfo {
+  id: string;
+  name: string;
+  picUrl: string;
+  artistName: string;
+}
+
+export interface PlaylistInfo {
+  playlistName: string;
+  tracks: TrackInfo[];
+}

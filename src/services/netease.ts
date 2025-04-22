@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import * as cheerio from 'cheerio';
 import { createCipheriv, createHash, randomBytes } from 'crypto';
-import { Song, AlbumInfo } from '../types';
+import { Song, AlbumInfo, TrackInfo, PlaylistInfo } from '../types';
 import { getAutoProxy } from './proxy';
 
 // 网易云音乐 API 加密参数
@@ -254,6 +254,52 @@ export async function getPlaylistInfo(playlistId: string): Promise<string[]> {
   }
 }
 
+export async function getPlaylistInfoV2(playlistId: string): Promise<PlaylistInfo> {
+  try {
+    // Direct API call to v6 endpoint without encryption
+    const response = await axios.get(
+      `https://music.163.com/api/v6/playlist/detail?id=${playlistId}`,
+      {
+        headers: {
+          ...headers,
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
+        },
+        ...proxyConfig
+      }
+    );
+
+    if (response.data?.code !== 200) {
+      throw new Error(`API 返回错误 API returned error: ${response.data?.message || 'Unknown error'}`);
+    }
+
+    const playlist = response.data.playlist;
+    if (!playlist) {
+      throw new Error('获取歌单信息失败 Failed to get playlist info');
+    }
+
+    // Extract tracks with their IDs and album picture URLs
+    const tracks = playlist.tracks?.map((track: any) => ({
+      id: track.id.toString(),
+      name: track.name,
+      picUrl: track.al?.picUrl || '',
+      artistName: track.ar?.map((artist: any) => artist.name).join(', ') || '未知歌手 Unknown Artist'
+    })) || [];
+
+    console.log(`从歌单中提取了 ${tracks.length} 首歌曲信息 Extracted ${tracks.length} tracks from playlist`);
+    console.log(tracks);
+
+    return {
+      playlistName: playlist.name,
+      tracks: tracks
+    };
+  } catch (error) {
+    console.error('获取歌单信息失败 Failed to get playlist info:', error instanceof Error ? error.message : 'Unknown error');
+    return {
+      playlistName: '',
+      tracks: []
+    };
+  }
+}
 
 async function getSongUrl(id: string, level: string): Promise<string | null> {
   try {

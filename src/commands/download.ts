@@ -20,7 +20,7 @@ async function downloadImage(url: string): Promise<Buffer | null> {
   }
 }
 
-export async function downloadSong(id: string, progressBar?: SingleBar, options?: { autoProxy?: boolean }): Promise<void> {
+export async function downloadSong(id: string, progressBar?: SingleBar, options?: { autoProxy?: boolean }, playlistName?: string): Promise<void> {
   const MAX_STALL_TIME = 10000; // 10 seconds
   const MAX_RETRIES = 3;
   let retryCount = 0;
@@ -53,8 +53,8 @@ export async function downloadSong(id: string, progressBar?: SingleBar, options?
       const sanitizedSongName = sanitizeFileName(songName);
       const sanitizedArtistName = sanitizeFileName(artistName);
       const fileName = `${sanitizedArtistName}-${sanitizedSongName}.${fileExtension}`;
-      const filePath = getDownloadPath('single', fileName);
-      const lrcPath = getDownloadPath('single', `${sanitizedArtistName}-${sanitizedSongName}.lrc`);
+      const filePath = getDownloadPath( playlistName ? 'album' : 'single', fileName, playlistName);
+      const lrcPath = getDownloadPath( playlistName ? 'album' : 'single', `${sanitizedArtistName}-${sanitizedSongName}.lrc`, playlistName);
 
       // 下载歌词
       const lyrics = await getLyrics(id);

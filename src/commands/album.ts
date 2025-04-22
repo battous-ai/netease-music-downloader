@@ -1,5 +1,5 @@
 import { createMultiBar } from '../utils/progress';
-import { getAlbumInfo, getPlaylistInfo, checkSongAvailabilityWithRetry, getLyrics, proxyConfig } from '../services/netease';
+import { getAlbumInfo, getPlaylistInfo, checkSongAvailabilityWithRetry, getLyrics, proxyConfig, getPlaylistInfoV2 } from '../services/netease';
 import { sanitizeFileName, getDownloadPath } from '../utils/file';
 import axios from 'axios';
 import * as fs from 'fs';
@@ -267,9 +267,9 @@ export async function downloadPlaylist(playlistId: string, issueNumber?: number,
       playlistId = match[1];
     }
 
-    let playlistInfo;
+    let playlistInfoV2;
     try {
-      playlistInfo = await getPlaylistInfo(playlistId);
+      playlistInfoV2 = await getPlaylistInfoV2(playlistId);
     } catch (error) {
       console.error('\n获取歌单信息失败，可能是网络问题或代理服务器无响应\nFailed to get playlist info, might be network issue or proxy server not responding');
       if (error instanceof Error) {
@@ -278,9 +278,13 @@ export async function downloadPlaylist(playlistId: string, issueNumber?: number,
       process.exit(1);
     }
 
-    for (const id of playlistInfo) {
-      await downloadSong(id, undefined, { autoProxy: options?.autoProxy });
+    for (const id of playlistInfoV2.tracks.map(track => track.id)) {
+      await downloadSong(id, undefined, { autoProxy: options?.autoProxy }, playlistInfoV2.playlistName);
     }
+
+    // save metadata to a json file
+    const filepath = getDownloadPath('album', `${playlistInfoV2.playlistName}.json`, playlistInfoV2.playlistName);
+    fs.writeFileSync(filepath, JSON.stringify(playlistInfoV2.tracks, null, 2));
   } catch (error) {
     if (issueNumber && !isNaN(Number(issueNumber))) {
       try {
